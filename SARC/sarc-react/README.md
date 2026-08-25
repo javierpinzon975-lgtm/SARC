@@ -64,10 +64,4 @@ sarc-react/
   para evitar problemas de rutas en el bundler; el logo del sistema y el fondo
   se sirven desde `public/img/`.
 
-## Notas
 
-- La lógica de negocio (login por rol, agendamiento, cancelación, HCE, PDFs) es
-  una traducción 1:1 de las reglas del `script.js` original: nada se resumió ni
-  se simplificó, solo se reorganizó en componentes y contexto de React.
-- El proyecto ya se compiló y verificó con `npm run build` sin errores antes de
-  la entrega.
