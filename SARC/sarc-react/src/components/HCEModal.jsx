@@ -54,14 +54,17 @@ export default function HCEModal({ citaId, onClose }) {
             .map(m => ({ nombre: m.nombre.trim(), cantidad: m.cantidad.trim() }))
             .filter(m => m.nombre && m.cantidad);
 
-        guardarParteMedico(citaId, {
+        const guardado = guardarParteMedico(citaId, {
             medicoNombre: currentUser.nombre,
             medicoId: currentUser.id,
             diagnostico: diagnostico.trim(),
             evolucion: evolucion.trim(),
             medicamentos: medicamentosValidos
         });
-        onClose();
+
+        if (guardado) {
+            onClose();
+        }
     }
 
     async function descargarPDFParteMedico() {

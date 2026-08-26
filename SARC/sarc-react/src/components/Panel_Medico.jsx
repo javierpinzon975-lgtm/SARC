@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { BLOQUES_HORARIOS } from '../data/constants';
+import { obtenerFechaActualISO } from '../utils/helpers';
 import HCEModal from './HCEModal';
 
 export default function DoctorPanel() {
     const { currentUser, citasGlobales, historialesClinicos, logout } = useApp();
     const [citaAbiertaId, setCitaAbiertaId] = useState(null);
+    const [fechaSeleccionada, setFechaSeleccionada] = useState(obtenerFechaActualISO());
+
+    const citasDelDia = citasGlobales.filter(c => c.medicoId === currentUser.id && c.fecha === fechaSeleccionada && c.estado === 'Confirmada');
 
     return (
         <section id="panel-medico" className="glass-card role-panel" style={{ display: 'block' }}>
@@ -17,10 +21,25 @@ export default function DoctorPanel() {
                 </div>
             </div>
 
-            <h3>Mi Agenda de Pacientes (8:00 a.m. - 5:00 p.m.)</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
-                Haga clic sobre una cita <strong>"Ocupado"</strong> para abrir la Historia Clínica Electrónica (HCE) y diligenciar el parte médico.
-            </p>
+            <div className="form-row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                    <h3>Mi Agenda de Pacientes (8:00 a.m. - 5:00 p.m.)</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                        Haga clic sobre una cita <strong>"Ocupado"</strong> para abrir la Historia Clínica Electrónica (HCE) y diligenciar el parte médico.
+                    </p>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="medico-date">Fecha de agenda</label>
+                    <input
+                        type="date"
+                        id="medico-date"
+                        value={fechaSeleccionada}
+                        min={obtenerFechaActualISO()}
+                        onChange={e => setFechaSeleccionada(e.target.value)}
+                    />
+                </div>
+            </div>
+
             <div className="table-container">
                 <table id="table-medico-citas">
                     <thead>
@@ -34,9 +53,7 @@ export default function DoctorPanel() {
                     </thead>
                     <tbody>
                         {BLOQUES_HORARIOS.map(hora => {
-                            const citaAsignada = citasGlobales.find(
-                                c => c.medicoId === currentUser.id && c.hora === hora && c.estado === 'Confirmada'
-                            );
+                            const citaAsignada = citasDelDia.find(c => c.hora === hora);
 
                             if (citaAsignada) {
                                 const historial = historialesClinicos[citaAsignada.pacienteId] || [];

@@ -2,12 +2,14 @@ import { createContext, useContext, useState } from 'react';
 import { usePersistentState } from '../utils/usePersistentState';
 import { useToast } from './ToastContext';
 import { RECEPCIONISTA, MEDICOS } from '../data/constants';
+import { puedeGenerarParteMedico } from '../utils/helpers';
 
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
     const [usuariosRegistrados, setUsuariosRegistrados] = usePersistentState('usuariosRegistrados', []);
     const [citasGlobales, setCitasGlobales] = usePersistentState('citasGlobales', []);
+    const [citasPorFecha, setCitasPorFecha] = usePersistentState('citasPorFecha', {});
     const [historialesClinicos, setHistorialesClinicos] = usePersistentState('historialesClinicos', {});
     const [currentUser, setCurrentUser] = useState(null);
     const [welcomeName, setWelcomeName] = useState(null);
@@ -63,6 +65,10 @@ export function AppProvider({ children }) {
     function agendarCita(datos) {
         const nuevaCita = { idCita: 'CITA-' + Date.now(), estado: 'Confirmada', ...datos };
         setCitasGlobales(prev => [...prev, nuevaCita]);
+        setCitasPorFecha(prev => ({
+            ...prev,
+            [nuevaCita.fecha]: [...(prev[nuevaCita.fecha] || []), nuevaCita]
+        }));
         showToast('Cita agendada correctamente.', 'success');
     }
 
@@ -76,6 +82,13 @@ export function AppProvider({ children }) {
         const cita = citasGlobales.find(c => c.idCita === idCita);
         if (!cita) return;
         setCitasGlobales(prev => prev.map(c => c.idCita === idCita ? { ...c, estado: 'Cancelada' } : c));
+        setCitasPorFecha(prev => {
+            const agendaDia = prev[cita.fecha] || [];
+            return {
+                ...prev,
+                [cita.fecha]: agendaDia.map(c => c.idCita === idCita ? { ...c, estado: 'Cancelada' } : c)
+            };
+        });
 
         window.alert(`NOTIFICACIÓN ENVIADA AUTOMÁTICAMENTE:
 
@@ -89,7 +102,15 @@ Por favor, reingrese al sistema SARC para realizar un nuevo agendamiento.`);
 
     function guardarParteMedico(citaId, datosParteMedico) {
         const cita = citasGlobales.find(c => c.idCita === citaId);
-        if (!cita) return;
+        if (!cita) {
+            showToast('La cita no existe en el ecosistema.', 'danger');
+            return false;
+        }
+
+        if (!puedeGenerarParteMedico(cita)) {
+            showToast('No se puede crear el parte médico antes de la fecha y hora programada de la cita.', 'danger');
+            return false;
+        }
 
         const parteMedico = {
             citaId,
@@ -113,6 +134,7 @@ Por favor, reingrese al sistema SARC para realizar un nuevo agendamiento.`);
         });
 
         showToast('Parte médico guardado correctamente en el HCE.', 'success');
+        return true;
     }
 
     function obtenerPacientePorId(pacienteId) {
@@ -122,6 +144,7 @@ Por favor, reingrese al sistema SARC para realizar un nuevo agendamiento.`);
     const value = {
         usuariosRegistrados,
         citasGlobales,
+        citasPorFecha,
         historialesClinicos,
         currentUser,
         welcomeName,
