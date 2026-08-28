@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MEDICOS, ESPECIALIDADES, BLOQUES_HORARIOS, FECHA_MINIMA } from '../data/constants';
+import { MEDICOS, ESPECIALIDADES, BLOQUES_HORARIOS } from '../data/constants';
+import { obtenerFechaActualISO } from '../utils/helpers';
 
 const initialForm = {
     phone: '', email: '', specialty: '', doctorId: '', date: '', time: ''
@@ -36,8 +37,7 @@ export default function BookingForm() {
         e.preventDefault();
         const medicoObj = MEDICOS.find(m => m.id === form.doctorId);
         if (!medicoObj) return;
-
-        agendarCita({
+        const agendada = agendarCita({
             pacienteNombre: currentUser.nombre,
             pacienteId: currentUser.id,
             celular: form.phone,
@@ -49,7 +49,7 @@ export default function BookingForm() {
             hora: form.time
         });
 
-        setForm(initialForm);
+        if (agendada) setForm(initialForm);
     }
 
     return (
@@ -106,7 +106,7 @@ export default function BookingForm() {
                 <div className="form-group">
                     <label htmlFor="book-date">Fecha</label>
                     <input
-                        type="date" id="book-date" required min={FECHA_MINIMA}
+                        type="date" id="book-date" required min={obtenerFechaActualISO()}
                         value={form.date}
                         onChange={e => updateField('date', e.target.value)}
                     />

@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { obtenerFechaActualISO } from '../utils/helpers';
 
 export default function ReceptionistPanel() {
-    const { currentUser, citasGlobales, enviarRecordatorio, cancelarCita, logout } = useApp();
+    const { currentUser, citasGlobales, obtenerAgendaPorFecha, enviarRecordatorio, cancelarCita, logout } = useApp();
+    const [fechaSeleccionada, setFechaSeleccionada] = useState(obtenerFechaActualISO());
+
+    const citasDelDia = obtenerAgendaPorFecha(fechaSeleccionada);
 
     function handleCancelar(idCita) {
         if (window.confirm('¿Está seguro de que desea cancelar esta cita debido a cambios imprevistos en la agenda del especialista?')) {
@@ -19,7 +24,19 @@ export default function ReceptionistPanel() {
                 </div>
             </div>
 
-            <h3>Consola Global de Gestión de Citas</h3>
+            <div className="form-row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3>Agenda por fecha</h3>
+                <div className="form-group">
+                    <label htmlFor="recepcionista-date">Fecha de agenda</label>
+                    <input
+                        type="date"
+                        id="recepcionista-date"
+                        value={fechaSeleccionada}
+                        onChange={e => setFechaSeleccionada(e.target.value)}
+                    />
+                </div>
+            </div>
+
             <div className="table-container">
                 <table id="table-recep-citas">
                     <thead>
@@ -34,9 +51,9 @@ export default function ReceptionistPanel() {
                         </tr>
                     </thead>
                     <tbody>
-                        {citasGlobales.length === 0 ? (
-                            <tr><td colSpan="7" style={{ textAlign: 'center' }}>No hay citas registradas en el ecosistema.</td></tr>
-                        ) : citasGlobales.map(c => (
+                        {citasDelDia.length === 0 ? (
+                            <tr><td colSpan="7" style={{ textAlign: 'center' }}>No hay citas registradas para el día {fechaSeleccionada}.</td></tr>
+                        ) : citasDelDia.map(c => (
                             <tr key={c.idCita}>
                                 <td><strong>{c.pacienteNombre}</strong></td>
                                 <td>{c.pacienteId}</td>

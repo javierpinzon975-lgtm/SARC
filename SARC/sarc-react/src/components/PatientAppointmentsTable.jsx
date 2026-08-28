@@ -2,6 +2,7 @@ import { useApp } from '../context/AppContext';
 import { generarPDFParte } from '../utils/pdf';
 import { calcularEdad } from '../utils/helpers';
 import { useToast } from '../context/ToastContext';
+import { puedeGenerarParteMedico } from '../utils/helpers';
 
 export default function PatientAppointmentsTable() {
     const { currentUser, citasGlobales, historialesClinicos, obtenerPacientePorId } = useApp();
@@ -12,6 +13,10 @@ export default function PatientAppointmentsTable() {
     async function descargarParte(citaId) {
         const cita = citasGlobales.find(c => c.idCita === citaId);
         if (!cita) return;
+        if (!puedeGenerarParteMedico(cita)) {
+            showToast('El parte médico no puede generarse antes de la fecha y hora de la cita.', 'danger');
+            return;
+        }
 
         const paciente = obtenerPacientePorId(cita.pacienteId);
         const edad = paciente && paciente.fechaNacimiento ? calcularEdad(paciente.fechaNacimiento) : 'N/A';

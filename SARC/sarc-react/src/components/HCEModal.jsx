@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { calcularEdad } from '../utils/helpers';
+import { calcularEdad, puedeGenerarParteMedico } from '../utils/helpers';
 import { generarPDFParte, generarPDFHistorial } from '../utils/pdf';
 import { useToast } from '../context/ToastContext';
 
@@ -35,6 +35,7 @@ export default function HCEModal({ citaId, onClose }) {
     }, [citaId]);
 
     if (!cita) return null;
+    const puedeAtender = puedeGenerarParteMedico(cita);
 
     function actualizarMedicamento(idx, campo, valor) {
         setMedicamentos(prev => prev.map((m, i) => i === idx ? { ...m, [campo]: valor } : m));
@@ -54,17 +55,24 @@ export default function HCEModal({ citaId, onClose }) {
             .map(m => ({ nombre: m.nombre.trim(), cantidad: m.cantidad.trim() }))
             .filter(m => m.nombre && m.cantidad);
 
-        guardarParteMedico(citaId, {
+        const guardado = guardarParteMedico(citaId, {
             medicoNombre: currentUser.nombre,
             medicoId: currentUser.id,
             diagnostico: diagnostico.trim(),
             evolucion: evolucion.trim(),
             medicamentos: medicamentosValidos
         });
-        onClose();
+
+        if (guardado) {
+            onClose();
+        }
     }
 
     async function descargarPDFParteMedico() {
+        if (!puedeGenerarParteMedico(cita)) {
+            showToast('El parte médico no puede generarse antes de la fecha y hora de la cita.', 'danger');
+            return;
+        }
         const historialActual = historialesClinicos[cita.pacienteId] || [];
         const parte = historialActual.find(h => h.citaId === citaId);
         if (!parte) {
@@ -94,6 +102,11 @@ export default function HCEModal({ citaId, onClose }) {
                     <strong>Fecha Atención:</strong> {cita.fecha} {cita.hora} |{' '}
                     <strong>Médico:</strong> {currentUser.nombre} (ID: {currentUser.id})
                 </div>
+                {!puedeAtender && (
+                    <p role="alert" style={{ color: '#b03a2e', fontWeight: 600 }}>
+                        Esta cita aún no ha llegado. El parte médico estará habilitado después de la fecha y hora programadas.
+                    </p>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
@@ -170,8 +183,8 @@ export default function HCEModal({ citaId, onClose }) {
                     </div>
 
                     <div className="modal-actions">
-                        <button type="submit" className="btn-success">Guardar Parte Médico</button>
-                        <button type="button" className="btn-primary" onClick={descargarPDFParteMedico}>Descargar PDF Parte Médico</button>
+                        <button type="submit" className="btn-success" disabled={!puedeAtender}>Guardar Parte Médico</button>
+                        <button type="button" className="btn-primary" disabled={!puedeAtender} onClick={descargarPDFParteMedico}>Descargar PDF Parte Médico</button>
                         <button type="button" className="btn-primary" onClick={descargarHistorialCompleto}>Descargar Historial Clínico PDF</button>
                         <button type="button" className="btn-danger" onClick={onClose}>Cerrar</button>
                     </div>
