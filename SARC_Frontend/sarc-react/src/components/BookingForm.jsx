@@ -4,7 +4,7 @@ import { MEDICOS, ESPECIALIDADES, BLOQUES_HORARIOS } from '../data/constants';
 import { obtenerFechaActualISO } from '../utils/helpers';
 
 const initialForm = {
-    phone: '', email: '', specialty: '', doctorId: '', date: '', time: ''
+    specialty: '', doctorId: '', date: '', time: ''
 };
 
 export default function BookingForm() {
@@ -35,13 +35,17 @@ export default function BookingForm() {
 
     function handleSubmit(e) {
         e.preventDefault();
+        if (!currentUser?.celular || !currentUser?.correo) {
+            return;
+        }
+
         const medicoObj = MEDICOS.find(m => m.id === form.doctorId);
         if (!medicoObj) return;
         const agendada = agendarCita({
             pacienteNombre: currentUser.nombre,
             pacienteId: currentUser.id,
-            celular: form.phone,
-            correo: form.email,
+            celular: currentUser.celular,
+            correo: currentUser.correo,
             especialidad: form.specialty,
             medicoNombre: medicoObj.nombre,
             medicoId: form.doctorId,
@@ -61,22 +65,6 @@ export default function BookingForm() {
             <div className="form-group">
                 <label>Identificación</label>
                 <input type="text" value={currentUser.id} readOnly />
-            </div>
-            <div className="form-group">
-                <label htmlFor="book-phone">Número de Celular</label>
-                <input
-                    type="tel" id="book-phone" required
-                    value={form.phone}
-                    onChange={e => updateField('phone', e.target.value)}
-                />
-            </div>
-            <div className="form-group">
-                <label htmlFor="book-email">Correo Electrónico</label>
-                <input
-                    type="email" id="book-email" required
-                    value={form.email}
-                    onChange={e => updateField('email', e.target.value)}
-                />
             </div>
             <div className="form-group">
                 <label htmlFor="book-specialty">Especialidad Médica</label>

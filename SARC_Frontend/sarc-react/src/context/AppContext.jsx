@@ -15,14 +15,42 @@ export function AppProvider({ children }) {
     const [welcomeName, setWelcomeName] = useState(null);
     const { showToast } = useToast();
 
-    function registrarPaciente({ nombre, id, fechaNacimiento, regimen }) {
+    function registrarUsuario({ nombre, id, fechaNacimiento = '', regimen = '', celular = '', correo = '', tipo = 'paciente' }) {
+        if (!nombre || !id) {
+            showToast('El nombre completo y la identificación son obligatorios.', 'danger');
+            return false;
+        }
+
+        if (tipo === 'paciente' && (!fechaNacimiento || !regimen || !celular || !correo)) {
+            showToast('Para registrar un paciente, debe diligenciar fecha de nacimiento, régimen, celular y correo.', 'danger');
+            return false;
+        }
+
         if (usuariosRegistrados.some(u => u.id === id)) {
             showToast('Este número de identificación ya está registrado.', 'danger');
             return false;
         }
-        setUsuariosRegistrados(prev => [...prev, { nombre, id, fechaNacimiento, regimen, tipo: 'paciente' }]);
-        showToast('Registro exitoso. Proceda a iniciar sesión.', 'success');
+
+        const nuevoUsuario = {
+            nombre,
+            id,
+            fechaNacimiento,
+            regimen,
+            celular,
+            correo,
+            tipo
+        };
+
+        setUsuariosRegistrados(prev => [...prev, nuevoUsuario]);
+
+        const label = tipo === 'paciente' ? 'Paciente' : tipo === 'medico' ? 'Médico' : 'Recepcionista';
+        showToast(`Registro de ${label} exitoso. Proceda a iniciar sesión.`, 'success');
         return true;
+    }
+
+    function registrarPaciente(data) {
+        const { tipo = 'paciente', ...rest } = data;
+        return registrarUsuario({ ...rest, tipo });
     }
 
     function login({ nombre, id }) {
@@ -40,11 +68,11 @@ export function AppProvider({ children }) {
             return medico;
         }
 
-        const pacienteEncontrado = usuariosRegistrados.find(u => u.nombre.toLowerCase() === nombre.toLowerCase() && u.id === id);
-        if (pacienteEncontrado) {
-            setCurrentUser(pacienteEncontrado);
-            dispararBienvenida(pacienteEncontrado.nombre);
-            return pacienteEncontrado;
+        const usuarioRegistrado = usuariosRegistrados.find(u => u.nombre.toLowerCase() === nombre.toLowerCase() && u.id === id);
+        if (usuarioRegistrado) {
+            setCurrentUser(usuarioRegistrado);
+            dispararBienvenida(usuarioRegistrado.nombre);
+            return usuarioRegistrado;
         }
 
         showToast('Credenciales no encontradas. Verifique datos o regístrese.', 'danger');
@@ -160,6 +188,7 @@ Por favor, reingrese al sistema SARC para realizar un nuevo agendamiento.`);
         currentUser,
         welcomeName,
         registrarPaciente,
+        registrarUsuario,
         login,
         logout,
         agendarCita,
