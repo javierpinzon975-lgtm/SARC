@@ -1,0 +1,1 @@
+package com.sarc.backend.dto; import jakarta.validation.constraints.*; import java.time.*; import com.sarc.backend.model.Enums; public record UsuarioRequest(@NotBlank String identificacion,@NotBlank String nombre,@NotNull Enums.TipoUsuario tipo,LocalDate fechaNacimiento,String telefono,@Email String correo,Long especialidadId){}

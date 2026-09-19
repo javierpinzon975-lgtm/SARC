@@ -8,7 +8,7 @@ export async function generarPDFParte(cita, parte, edad, medicoNombre, medicoId)
 
     try {
         const logoBase64 = await getBase64ImageFromUrl('/img/Logo_PG.png');
-        doc.addImage(logoBase64, 'PNG', 14, 8, 28, 28);
+        doc.addImage(logoBase64, 'PNG', 20, 14, 30, 30);
     } catch (e) {
         console.warn('No fue posible cargar el logo en el PDF (parte médico):', e);
     }
@@ -111,7 +111,7 @@ export async function generarPDFHistorial(nombrePaciente, idPaciente, edad, hist
 
     try {
         const logoBase64 = await getBase64ImageFromUrl('/img/Logo_PG.png');
-        doc.addImage(logoBase64, 'PNG', 14, 8, 28, 28);
+        doc.addImage(logoBase64, 'PNG', 20, 14, 30, 30);
     } catch (e) {
         console.warn('No fue posible cargar el logo en el PDF (historial clínico):', e);
     }

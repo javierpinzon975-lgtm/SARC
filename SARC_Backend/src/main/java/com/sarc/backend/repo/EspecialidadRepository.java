@@ -1,0 +1,1 @@
+package com.sarc.backend.repo; import com.sarc.backend.model.Especialidad; import org.springframework.data.jpa.repository.JpaRepository; public interface EspecialidadRepository extends JpaRepository<Especialidad,Long>{}

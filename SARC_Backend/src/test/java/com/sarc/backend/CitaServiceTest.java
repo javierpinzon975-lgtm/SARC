@@ -1,0 +1,5 @@
+package com.sarc.backend;
+import com.sarc.backend.dto.*; import com.sarc.backend.model.*; import com.sarc.backend.repo.*; import com.sarc.backend.service.*; import org.junit.jupiter.api.*; import org.mockito.*; import java.time.*; import static org.junit.jupiter.api.Assertions.*; import static org.mockito.Mockito.*;
+class CitaServiceTest { @Mock CitaRepository repo; @Mock UsuarioService users; CitaService service; @BeforeEach void init(){MockitoAnnotations.openMocks(this);service=new CitaService(repo,users);}
+ @Test void rechazaPasado(){var x=new CitaRequest(1L,2L,null,LocalDate.now().minusDays(1),LocalTime.NOON,"");assertThrows(BusinessException.class,()->service.crear(x));}
+ @Test void evitaDobleReserva(){Usuario m=new Usuario();m.setTipo(Enums.TipoUsuario.MEDICO);when(users.get(2L)).thenReturn(m);when(repo.existsByMedicoIdAndFechaAndHoraAndEstadoNot(any(),any(),any(),eq(Enums.EstadoCita.CANCELADA))).thenReturn(true);var x=new CitaRequest(1L,2L,null,LocalDate.now().plusDays(1),LocalTime.NOON,"");assertThrows(BusinessException.class,()->service.crear(x));}}

@@ -1,8 +1,8 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { usePersistentState } from '../utils/usePersistentState';
 import { useToast } from './ToastContext';
 import { RECEPCIONISTA, MEDICOS } from '../data/constants';
-import { puedeAgendarseLaCita, puedeGenerarParteMedico } from '../utils/helpers';
+import { convertirHoraCitaAMomento, puedeAgendarseLaCita, puedeGenerarParteMedico } from '../utils/helpers';
 
 const AppContext = createContext(null);
 
@@ -15,13 +15,45 @@ export function AppProvider({ children }) {
     const [welcomeName, setWelcomeName] = useState(null);
     const { showToast } = useToast();
 
-    function registrarUsuario({ nombre, id, fechaNacimiento = '', regimen = '', celular = '', correo = '', tipo = 'paciente' }) {
+    useEffect(() => {
+        function actualizarCitasTerminadas() {
+            const limiteTerminada = Date.now() - 30 * 60 * 1000;
+            const debeMarcarseComoTerminada = cita => {
+                if (cita.estado !== 'Confirmada') return false;
+                const momentoCita = convertirHoraCitaAMomento(cita.fecha, cita.hora);
+                return momentoCita && momentoCita.getTime() <= limiteTerminada;
+            };
+
+            const citasActualizadas = citasGlobales.map(cita =>
+                debeMarcarseComoTerminada(cita) ? { ...cita, estado: 'Terminada' } : cita
+            );
+            const huboCambios = citasActualizadas.some((cita, index) => cita !== citasGlobales[index]);
+
+            if (huboCambios) {
+                setCitasGlobales(citasActualizadas);
+                setCitasPorFecha(prev =>
+                    Object.fromEntries(Object.entries(prev).map(([fecha, citas]) => [
+                        fecha,
+                        citas.map(cita =>
+                            debeMarcarseComoTerminada(cita) ? { ...cita, estado: 'Terminada' } : cita
+                        )
+                    ]))
+                );
+            }
+        }
+
+        actualizarCitasTerminadas();
+        const intervalId = window.setInterval(actualizarCitasTerminadas, 60 * 1000);
+        return () => window.clearInterval(intervalId);
+    }, [citasGlobales, setCitasGlobales, setCitasPorFecha]);
+
+    function registrarPaciente({ nombre, id, fechaNacimiento = '', regimen = '', celular = '', correo = '' }) {
         if (!nombre || !id) {
             showToast('El nombre completo y la identificación son obligatorios.', 'danger');
             return false;
         }
 
-        if (tipo === 'paciente' && (!fechaNacimiento || !regimen || !celular || !correo)) {
+        if (!fechaNacimiento || !regimen || !celular || !correo) {
             showToast('Para registrar un paciente, debe diligenciar fecha de nacimiento, régimen, celular y correo.', 'danger');
             return false;
         }
@@ -38,19 +70,13 @@ export function AppProvider({ children }) {
             regimen,
             celular,
             correo,
-            tipo
+            tipo: 'paciente'
         };
 
         setUsuariosRegistrados(prev => [...prev, nuevoUsuario]);
 
-        const label = tipo === 'paciente' ? 'Paciente' : tipo === 'medico' ? 'Médico' : 'Recepcionista';
-        showToast(`Registro de ${label} exitoso. Proceda a iniciar sesión.`, 'success');
+        showToast('Registro de paciente exitoso. Proceda a iniciar sesión.', 'success');
         return true;
-    }
-
-    function registrarPaciente(data) {
-        const { tipo = 'paciente', ...rest } = data;
-        return registrarUsuario({ ...rest, tipo });
     }
 
     function login({ nombre, id }) {
@@ -106,10 +132,14 @@ export function AppProvider({ children }) {
         return true;
     }
 
-    function enviarRecordatorio(idCita) {
+    function enviarRecordatorio(idCita, canal = 'sms') {
         const cita = citasGlobales.find(c => c.idCita === idCita);
         if (!cita) return;
-        showToast(`Recordatorio enviado a ${cita.pacienteNombre} vía WhatsApp/SMS (${cita.celular}) y Correo electrónico (${cita.correo}).`, 'success');
+        const esSms = canal === 'sms';
+        const medio = esSms
+            ? `SMS/WhatsApp (${cita.celular})`
+            : `correo electrónico (${cita.correo})`;
+        showToast(`Recordatorio enviado a ${cita.pacienteNombre} vía ${medio}.`, 'success');
     }
 
     function cancelarCita(idCita) {
@@ -188,7 +218,6 @@ Por favor, reingrese al sistema SARC para realizar un nuevo agendamiento.`);
         currentUser,
         welcomeName,
         registrarPaciente,
-        registrarUsuario,
         login,
         logout,
         agendarCita,

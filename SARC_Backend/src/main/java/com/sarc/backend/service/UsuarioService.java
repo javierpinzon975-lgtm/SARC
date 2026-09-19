@@ -1,0 +1,6 @@
+package com.sarc.backend.service;
+import com.sarc.backend.model.*; import com.sarc.backend.dto.*; import com.sarc.backend.repo.*; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional;
+@Service public class UsuarioService { private final UsuarioRepository repo; private final EspecialidadRepository esp; public UsuarioService(UsuarioRepository r,EspecialidadRepository e){repo=r;esp=e;}
+ @Transactional public Usuario crear(UsuarioRequest x){if(repo.existsByIdentificacion(x.identificacion()))throw new BusinessException("La identificación ya está registrada"); Usuario u=new Usuario();u.setIdentificacion(x.identificacion());u.setNombre(x.nombre());u.setTipo(x.tipo());u.setFechaNacimiento(x.fechaNacimiento());u.setTelefono(x.telefono());u.setCorreo(x.correo());if(x.especialidadId()!=null)u.setEspecialidad(esp.findById(x.especialidadId()).orElseThrow(()->new BusinessException("Especialidad no existe")));return repo.save(u);}
+ public Usuario login(LoginRequest x){return repo.findByNombreIgnoreCaseAndIdentificacion(x.nombre(),x.identificacion()).orElseThrow(()->new BusinessException("Credenciales no encontradas"));}
+ public Usuario get(Long id){return repo.findById(id).orElseThrow(()->new BusinessException("Usuario no existe"));} public Object all(){return repo.findAll();}}

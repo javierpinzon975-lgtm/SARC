@@ -1,0 +1,1 @@
+package com.sarc.backend.repo; import com.sarc.backend.model.*; import java.time.*; import org.springframework.data.jpa.repository.JpaRepository; public interface CitaRepository extends JpaRepository<Cita,Long>{boolean existsByMedicoIdAndFechaAndHoraAndEstadoNot(Long m,LocalDate f,LocalTime h,Enums.EstadoCita e);}

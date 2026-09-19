@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { obtenerFechaActualISO } from '../utils/helpers';
+import AgendaCalendario from './AgendaCalendario';
+import MiniCalendario from './MiniCalendario';
 
 export default function ReceptionistPanel() {
-    const { currentUser, citasGlobales, obtenerAgendaPorFecha, enviarRecordatorio, cancelarCita, logout } = useApp();
+    const { currentUser, obtenerAgendaPorFecha, enviarRecordatorio, cancelarCita, logout } = useApp();
     const [fechaSeleccionada, setFechaSeleccionada] = useState(obtenerFechaActualISO());
 
     const citasDelDia = obtenerAgendaPorFecha(fechaSeleccionada);
@@ -15,66 +17,77 @@ export default function ReceptionistPanel() {
     }
 
     return (
-        <section id="panel-recepcionista" className="glass-card role-panel" style={{ display: 'block' }}>
+        <section id="panel-recepcionista" className="glass-card role-panel doctor-calendar receptionist-calendar" style={{ display: 'block' }}>
             <div className="panel-header">
-                <h2>Panel de Recepción</h2>
+                <div>
+                    <p className="calendar-eyebrow">GESTIÓN PROFESIONAL</p>
+                    <h2>Agenda de recepción</h2>
+                </div>
                 <div className="user-info-badge">
                     <span>{currentUser.nombre} (Recepcionista)</span>
                     <button className="btn-logout" onClick={logout}>Cerrar Sesión</button>
                 </div>
             </div>
 
-            <div className="form-row" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <h3>Agenda por fecha</h3>
-                <div className="form-group">
-                    <label htmlFor="recepcionista-date">Fecha de agenda</label>
-                    <input
-                        type="date"
-                        id="recepcionista-date"
-                        value={fechaSeleccionada}
-                        onChange={e => setFechaSeleccionada(e.target.value)}
+            <div className="doctor-workspace">
+                <aside className="mini-calendar-column">
+                    <div className="mini-calendar-intro">
+                        <span className="calendar-eyebrow">Selecciona un día</span>
+                        <h3>Agenda general</h3>
+                        <p>Elige una fecha para gestionar las citas de la jornada.</p>
+                    </div>
+                    <MiniCalendario
+                        fechaSeleccionada={fechaSeleccionada}
+                        onChange={setFechaSeleccionada}
+                    />
+                    <div className="selected-date-note">
+                        <span>Fecha seleccionada</span>
+                        <strong>{fechaSeleccionada}</strong>
+                    </div>
+                </aside>
+                <div className="hours-calendar-column">
+                    <div className="hours-calendar-heading">
+                        <span className="calendar-eyebrow">Panel de citas</span>
+                        <h3>Gestión de citas</h3>
+                        <p>Consulta la disponibilidad y gestiona cada cita desde una vista rápida.</p>
+                    </div>
+                    <AgendaCalendario
+                        fecha={fechaSeleccionada}
+                        citas={citasDelDia}
+                        mostrarDisponibles
+                        renderCita={c => (
+                            <article className={`calendar-event reception-event ${c.estado.toLowerCase()}`} key={c.idCita}>
+                                <div className="calendar-event-main">
+                                    <strong>{c.pacienteNombre}</strong>
+                                    <span>{c.especialidad} · {c.medicoNombre}</span>
+                                    <small>ID {c.pacienteId}</small>
+                                </div>
+                                <div className="calendar-event-meta">
+                                    <span className={`status-badge ${c.estado.toLowerCase()}`}>{c.estado}</span>
+                                    {c.estado === 'Confirmada' ? (
+                                        <div className="calendar-event-actions">
+                                            <button
+                                                className="btn-action-notify btn-action-sms"
+                                                onClick={() => enviarRecordatorio(c.idCita, 'sms')}
+                                                aria-label={`Notificar a ${c.pacienteNombre} por SMS`}
+                                            >
+                                                SMS
+                                            </button>
+                                            <button
+                                                className="btn-action-notify btn-action-email"
+                                                onClick={() => enviarRecordatorio(c.idCita, 'correo')}
+                                                aria-label={`Notificar a ${c.pacienteNombre} por correo electrónico`}
+                                            >
+                                                Correo
+                                            </button>
+                                            <button className="btn-action-cancel" onClick={() => handleCancelar(c.idCita)}>Cancelar</button>
+                                        </div>
+                                    ) : <em>Sin acciones</em>}
+                                </div>
+                            </article>
+                        )}
                     />
                 </div>
-            </div>
-
-            <div className="table-container">
-                <table id="table-recep-citas">
-                    <thead>
-                        <tr>
-                            <th>Paciente</th>
-                            <th>Identificación</th>
-                            <th>Médico</th>
-                            <th>Especialidad</th>
-                            <th>Fecha/Hora</th>
-                            <th>Estado</th>
-                            <th>Acciones de Gestión</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {citasDelDia.length === 0 ? (
-                            <tr><td colSpan="7" style={{ textAlign: 'center' }}>No hay citas registradas para el día {fechaSeleccionada}.</td></tr>
-                        ) : citasDelDia.map(c => (
-                            <tr key={c.idCita}>
-                                <td><strong>{c.pacienteNombre}</strong></td>
-                                <td>{c.pacienteId}</td>
-                                <td>{c.medicoNombre}</td>
-                                <td>{c.especialidad}</td>
-                                <td>{c.fecha} ({c.hora})</td>
-                                <td><span className={`status-badge ${c.estado.toLowerCase()}`}>{c.estado}</span></td>
-                                <td>
-                                    {c.estado === 'Confirmada' ? (
-                                        <>
-                                            <button className="btn-action-notify" onClick={() => enviarRecordatorio(c.idCita)}>Notificar</button>
-                                            <button className="btn-action-cancel" onClick={() => handleCancelar(c.idCita)}>Cancelar</button>
-                                        </>
-                                    ) : (
-                                        <em style={{ color: 'var(--text-muted)' }}>Sin acciones</em>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
             </div>
         </section>
     );

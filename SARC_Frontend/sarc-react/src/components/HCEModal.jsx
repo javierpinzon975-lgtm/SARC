@@ -88,34 +88,35 @@ export default function HCEModal({ citaId, onClose }) {
     }
 
     return (
-        <div className="modal" style={{ display: 'flex' }}>
-            <div className="modal-content glass-card">
-                <div className="modal-header">
-                    <h3>Historia Clínica Electrónica (HCE) - Parte Médico</h3>
+        <section className="hce-page-panel">
+            <div className="hce-panel-content">
+                <div className="modal-header hce-header">
+                    <div className="hce-title-group">
+                        <span className="hce-kicker">Atención clínica</span>
+                        <h3>Historia Clínica Electrónica</h3>
+                        <p>Parte médico y seguimiento del paciente</p>
+                    </div>
                     <button type="button" className="btn-close" onClick={onClose}>&times;</button>
                 </div>
                 <div className="hce-info-bar">
-                    <strong>Institución:</strong> P&amp;G Servicios Médicos |{' '}
-                    <strong>Paciente:</strong> {cita.pacienteNombre} |{' '}
-                    <strong>ID:</strong> {cita.pacienteId} |{' '}
-                    <strong>Edad:</strong> {edad} años |{' '}
-                    <strong>Fecha Atención:</strong> {cita.fecha} {cita.hora} |{' '}
-                    <strong>Médico:</strong> {currentUser.nombre} (ID: {currentUser.id})
+                    <div><span>Paciente</span><strong>{cita.pacienteNombre}</strong><small>ID {cita.pacienteId}</small></div>
+                    <div><span>Edad</span><strong>{edad} años</strong></div>
+                    <div><span>Atención</span><strong>{cita.fecha} · {cita.hora}</strong></div>
+                    <div><span>Profesional</span><strong>{currentUser.nombre}</strong></div>
                 </div>
                 {!puedeAtender && (
-                    <p role="alert" style={{ color: '#b03a2e', fontWeight: 600 }}>
+                    <p className="hce-alert" role="alert">
                         Esta cita aún no ha llegado. El parte médico estará habilitado después de la fecha y hora programadas.
                     </p>
                 )}
 
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
+                    <div className="form-group hce-section">
+                        <div className="hce-section-heading"><span className="hce-section-number">01</span><div><h4>Valoración clínica</h4><p>Registra los hallazgos principales de la consulta.</p></div></div>
                         <label htmlFor="hce-diagnostico">
-                            Diagnóstico{' '}
-                            <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>
-                                (Descripción clínica de la enfermedad, patología o lesión diagnosticada)
-                            </span>
+                            Diagnóstico
                         </label>
+                        <span className="hce-field-hint">Describe la enfermedad, patología o lesión diagnosticada.</span>
                         <textarea
                             id="hce-diagnostico" rows="4" required
                             placeholder="Ej: Paciente presenta infección respiratoria aguda con fiebre de 38.5°C..."
@@ -124,13 +125,12 @@ export default function HCEModal({ citaId, onClose }) {
                         />
                     </div>
 
-                    <div className="form-group">
+                    <div className="form-group hce-section">
+                        <div className="hce-section-heading"><span className="hce-section-number">02</span><div><h4>Evolución y pronóstico</h4><p>Documenta el estado actual y las recomendaciones.</p></div></div>
                         <label htmlFor="hce-evolucion">
-                            Evolución / Pronóstico{' '}
-                            <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>
-                                (Estado actual, tratamientos aplicados, recomendaciones o pronóstico de recuperación)
-                            </span>
+                            Evolución / Pronóstico
                         </label>
+                        <span className="hce-field-hint">Incluye tratamientos aplicados, recomendaciones y control.</span>
                         <textarea
                             id="hce-evolucion" rows="4" required
                             placeholder="Ej: Estado estable. Se prescribe tratamiento antibiótico por 7 días. Control en 8 días..."
@@ -139,8 +139,8 @@ export default function HCEModal({ citaId, onClose }) {
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Medicamentos Formulados</label>
+                    <div className="form-group hce-section">
+                        <div className="hce-section-heading"><span className="hce-section-number">03</span><div><h4>Medicamentos formulados</h4><p>Añade los medicamentos y cantidades indicadas.</p></div></div>
                         <table className="table-meds">
                             <thead>
                                 <tr>
@@ -190,6 +190,6 @@ export default function HCEModal({ citaId, onClose }) {
                     </div>
                 </form>
             </div>
-        </div>
+        </section>
     );
 }

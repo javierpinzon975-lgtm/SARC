@@ -41,27 +41,6 @@ sarc-react/
 └── index.html
 ```
 
-## Qué cambió respecto a la versión original
 
-- **Sin manipulación directa del DOM**: todo `document.getElementById`,
-  `innerHTML`, `onclick="..."` del `script.js` original se reemplazó por estado
-  de React (`useState`/`useContext`) y renderizado declarativo.
-- **Estado global** (`usuariosRegistrados`, `citasGlobales`, `historialesClinicos`)
-  vive en `AppContext` y se persiste automáticamente en `localStorage`
-  (mismas claves que la versión original: `usuariosRegistrados`, `citasGlobales`,
-  `historialesClinicos`), por lo que el comportamiento de "base de datos" en el
-  navegador se mantiene igual.
-- **Notificaciones (toast)** y el **overlay de bienvenida** ahora son componentes
-  React (`ToastContext`, `WelcomeOverlay`) en lugar de funciones que inyectan HTML.
-- **Generación de PDF** (`jsPDF` + `jspdf-autotable`) se movió a `src/utils/pdf.js`
-  como funciones puras que reciben datos y se importan donde se necesitan
-  (panel de paciente, panel médico, modal HCE) — la lógica interna de cada PDF
-  es la misma que la original.
-- **El modal HCE** (`HCEModal.jsx`) es ahora un componente controlado que recibe
-  el `citaId` seleccionado y administra su propio formulario (diagnóstico,
-  evolución, tabla dinámica de medicamentos) con estado local.
-- Las imágenes se renombraron sin espacios ni `&` (`Logo_P_G.png` → `Logo_PG.png`)
-  para evitar problemas de rutas en el bundler; el logo del sistema y el fondo
-  se sirven desde `public/img/`.
 
 

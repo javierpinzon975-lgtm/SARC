@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/proyecto_sarc?useSSL=false&serverTimezone=UTC
+    username: root
+    password: ""
+  jpa:
+    hibernate.ddl-auto: update
+    open-in-view: false
+  jackson.serialization.write-dates-as-timestamps: false
+server.port: 8080

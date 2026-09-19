@@ -1,0 +1,1 @@
+package com.sarc.backend.dto; import jakarta.validation.constraints.*; import java.time.*; public record CitaRequest(@NotNull Long pacienteId,@NotNull Long medicoId,Long recepcionistaId,@NotNull @FutureOrPresent LocalDate fecha,@NotNull LocalTime hora,String motivo){}
