@@ -10,11 +10,17 @@ function formatearFecha(fecha) {
     }).format(new Date(`${fecha}T12:00:00`));
 }
 
-export default function AgendaCalendario({ fecha, citas, renderCita, mostrarDisponibles = false }) {
+export default function AgendaCalendario({
+    fecha,
+    citas,
+    renderCita,
+    mostrarDisponibles = false,
+    soloHorasConCitas = false
+}) {
     const citasPorHora = BLOQUES_HORARIOS.map(hora => ({
         hora,
         citas: citas.filter(cita => cita.hora === hora)
-    }));
+    })).filter(({ citas: citasDeLaHora }) => !soloHorasConCitas || citasDeLaHora.length > 0);
     const citasFueraDeHorario = citas.filter(cita => !BLOQUES_HORARIOS.includes(cita.hora));
     const totalCitas = citas.length;
 

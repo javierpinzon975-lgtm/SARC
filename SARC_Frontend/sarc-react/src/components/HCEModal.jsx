@@ -49,13 +49,13 @@ export default function HCEModal({ citaId, onClose }) {
         setMedicamentos(prev => prev.filter((_, i) => i !== idx));
     }
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
         const medicamentosValidos = medicamentos
             .map(m => ({ nombre: m.nombre.trim(), cantidad: m.cantidad.trim() }))
             .filter(m => m.nombre && m.cantidad);
 
-        const guardado = guardarParteMedico(citaId, {
+        const guardado = await guardarParteMedico(citaId, {
             medicoNombre: currentUser.nombre,
             medicoId: currentUser.id,
             diagnostico: diagnostico.trim(),
@@ -84,7 +84,13 @@ export default function HCEModal({ citaId, onClose }) {
 
     async function descargarHistorialCompleto() {
         const historialActual = historialesClinicos[cita.pacienteId] || [];
-        await generarPDFHistorial(cita.pacienteNombre, cita.pacienteId, edad, historialActual);
+        await generarPDFHistorial(
+            cita.pacienteNombre,
+            cita.pacienteId,
+            edad,
+            historialActual,
+            paciente?.tipoIdentificacion || cita.tipoIdentificacion || 'CEDULA'
+        );
     }
 
     return (
@@ -98,19 +104,32 @@ export default function HCEModal({ citaId, onClose }) {
                     </div>
                     <button type="button" className="btn-close" onClick={onClose}>&times;</button>
                 </div>
-                <div className="hce-info-bar">
-                    <div><span>Paciente</span><strong>{cita.pacienteNombre}</strong><small>ID {cita.pacienteId}</small></div>
-                    <div><span>Edad</span><strong>{edad} años</strong></div>
-                    <div><span>Atención</span><strong>{cita.fecha} · {cita.hora}</strong></div>
-                    <div><span>Profesional</span><strong>{currentUser.nombre}</strong></div>
-                </div>
-                {!puedeAtender && (
-                    <p className="hce-alert" role="alert">
-                        Esta cita aún no ha llegado. El parte médico estará habilitado después de la fecha y hora programadas.
-                    </p>
-                )}
+                <div className="hce-editor-layout">
+                    <aside className="hce-patient-sidebar">
+                        <div className="hce-info-bar">
+                            <div><span>Paciente</span><strong>{cita.pacienteNombre}</strong><small>ID {cita.pacienteId}</small></div>
+                            <div><span>Edad</span><strong>{edad} años</strong></div>
+                            <div><span>Atención</span><strong>{cita.fecha} · {cita.hora}</strong></div>
+                            <div><span>Profesional</span><strong>{currentUser.nombre}</strong></div>
+                        </div>
+                        <div className="hce-sidebar-actions">
+                            <button type="button" className="btn-primary" disabled={!puedeAtender} onClick={descargarPDFParteMedico}>
+                                Descargar PDF Parte Médico
+                            </button>
+                            <button type="button" className="btn-primary" onClick={descargarHistorialCompleto}>
+                                Descargar Historial Clínico PDF
+                            </button>
+                        </div>
+                    </aside>
 
-                <form onSubmit={handleSubmit}>
+                    <div className="hce-form-column">
+                        {!puedeAtender && (
+                            <p className="hce-alert" role="alert">
+                                Esta cita aún no ha llegado. El parte médico estará habilitado después de la fecha y hora programadas.
+                            </p>
+                        )}
+
+                        <form onSubmit={handleSubmit}>
                     <div className="form-group hce-section">
                         <div className="hce-section-heading"><span className="hce-section-number">01</span><div><h4>Valoración clínica</h4><p>Registra los hallazgos principales de la consulta.</p></div></div>
                         <label htmlFor="hce-diagnostico">
@@ -182,13 +201,13 @@ export default function HCEModal({ citaId, onClose }) {
                         <button type="button" className="btn-secondary" onClick={agregarFila}>+ Agregar Medicamento</button>
                     </div>
 
-                    <div className="modal-actions">
-                        <button type="submit" className="btn-success" disabled={!puedeAtender}>Guardar Parte Médico</button>
-                        <button type="button" className="btn-primary" disabled={!puedeAtender} onClick={descargarPDFParteMedico}>Descargar PDF Parte Médico</button>
-                        <button type="button" className="btn-primary" onClick={descargarHistorialCompleto}>Descargar Historial Clínico PDF</button>
-                        <button type="button" className="btn-danger" onClick={onClose}>Cerrar</button>
+                            <div className="modal-actions">
+                                <button type="submit" className="btn-success" disabled={!puedeAtender}>Guardar Parte Médico</button>
+                                <button type="button" className="btn-danger" onClick={onClose}>Cerrar</button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </section>
     );

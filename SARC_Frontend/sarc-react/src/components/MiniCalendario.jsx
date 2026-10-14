@@ -19,11 +19,12 @@ function fechaAISO(fecha) {
     ].join('-');
 }
 
-export default function MiniCalendario({ fechaSeleccionada, onChange }) {
+export default function MiniCalendario({ fechaSeleccionada, onChange, fechasConCitas = [] }) {
     const fechaInicial = fechaDesdeISO(fechaSeleccionada);
     const [mesVisible, setMesVisible] = useState(
         new Date(fechaInicial.getFullYear(), fechaInicial.getMonth(), 1)
     );
+    const fechasConCitasSet = useMemo(() => new Set(fechasConCitas), [fechasConCitas]);
 
     const dias = useMemo(() => {
         const primerDia = new Date(mesVisible.getFullYear(), mesVisible.getMonth(), 1);
@@ -58,12 +59,13 @@ export default function MiniCalendario({ fechaSeleccionada, onChange }) {
 
                     const iso = fechaAISO(dia);
                     const seleccionado = iso === fechaSeleccionada;
+                    const tieneCitas = fechasConCitasSet.has(iso);
                     return (
                         <button
                             type="button"
-                            className={seleccionado ? 'selected' : ''}
+                            className={`${seleccionado ? 'selected' : ''}${tieneCitas ? ' has-appointments' : ''}`}
                             key={iso}
-                            aria-label={`Seleccionar ${dia.getDate()} de ${nombresMeses[dia.getMonth()]}`}
+                            aria-label={`Seleccionar ${dia.getDate()} de ${nombresMeses[dia.getMonth()]}${tieneCitas ? ', tiene citas asignadas' : ''}`}
                             aria-pressed={seleccionado}
                             onClick={() => onChange(iso)}
                         >

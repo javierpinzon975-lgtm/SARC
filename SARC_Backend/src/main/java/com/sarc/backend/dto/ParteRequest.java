@@ -1,1 +1,14 @@
-package com.sarc.backend.dto; import jakarta.validation.constraints.*; public record ParteRequest(@NotBlank String diagnostico,@NotBlank String tratamiento,String observaciones,Long medicoId){}
+package com.sarc.backend.dto;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import java.util.List;
+
+public record ParteRequest(
+        @NotBlank String diagnostico,
+        String evolucion,
+        String tratamiento,
+        String observaciones,
+        @Valid List<MedicamentoRequest> medicamentos,
+        Long medicoId
+) {}

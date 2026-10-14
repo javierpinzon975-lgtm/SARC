@@ -1,13 +1,35 @@
+import { TIPOS_IDENTIFICACION } from '../data/constants';
+
 export function calcularEdad(fechaNacimiento) {
     if (!fechaNacimiento) return null;
     const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
+    const fecha = fechaNacimiento.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!fecha) return null;
+    const nacimiento = new Date(Number(fecha[1]), Number(fecha[2]) - 1, Number(fecha[3]));
+    if (
+        nacimiento.getFullYear() !== Number(fecha[1])
+        || nacimiento.getMonth() !== Number(fecha[2]) - 1
+        || nacimiento.getDate() !== Number(fecha[3])
+    ) return null;
     let edad = hoy.getFullYear() - nacimiento.getFullYear();
     const mes = hoy.getMonth() - nacimiento.getMonth();
     if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
         edad--;
     }
     return edad;
+}
+
+export function obtenerTipoIdentificacionPorEdad(fechaNacimiento) {
+    const edad = calcularEdad(fechaNacimiento);
+    if (edad === null || edad < 0) return null;
+    if (edad >= 18) return 'CEDULA';
+    if (edad >= 7) return 'TARJETA_IDENTIDAD';
+    return 'REGISTRO_CIVIL';
+}
+
+export function obtenerEtiquetaTipoIdentificacion(tipoIdentificacion) {
+    return TIPOS_IDENTIFICACION.find(tipo => tipo.valor === tipoIdentificacion)?.etiqueta
+        || TIPOS_IDENTIFICACION.find(tipo => tipo.valor === 'CEDULA').etiqueta;
 }
 
 export function obtenerFechaActualISO() {
@@ -57,10 +79,10 @@ export function fechaDeLaCitaEsAnteriorOIgualAlSistema(fecha, hora) {
     return Date.now() >= fechaHoraCita.getTime();
 }
 
-export function puedeAgendarseLaCita(fecha, hora) {
+export function puedeAgendarseLaCita(fecha, hora, ahora = Date.now()) {
     const fechaHoraCita = convertirHoraCitaAMomento(fecha, hora);
     if (!fechaHoraCita) return false;
-    return Date.now() < fechaHoraCita.getTime();
+    return ahora < fechaHoraCita.getTime();
 }
 
 // Convertir imagen URL a Base64 (para incrustar el logo en los PDFs)

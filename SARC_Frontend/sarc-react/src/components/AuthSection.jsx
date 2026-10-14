@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { TIPOS_IDENTIFICACION } from '../data/constants';
+import { calcularEdad } from '../utils/helpers';
 
 export default function AuthSection() {
     const [tab, setTab] = useState('login');
@@ -11,35 +13,37 @@ export default function AuthSection() {
         nombre: '',
         id: '',
         fechaNacimiento: '',
-        regimen: '',
-        celular: '',
-        correo: ''
+        tipoIdentificacion: '',
+        regimen: ''
     });
+    const edadRegistro = calcularEdad(regData.fechaNacimiento);
+    const tiposDocumentoDisponibles = edadRegistro !== null && edadRegistro >= 18
+        ? TIPOS_IDENTIFICACION.filter(tipo => tipo.valor === 'CEDULA')
+        : TIPOS_IDENTIFICACION;
 
     function handleLogin(e) {
         e.preventDefault();
         login({ nombre: loginData.nombre.trim(), id: loginData.id.trim() });
     }
 
-    function handleRegister(e) {
+    async function handleRegister(e) {
         e.preventDefault();
-        const ok = registrarPaciente({
+        const ok = await registrarPaciente({
             nombre: regData.nombre.trim(),
             id: regData.id.trim(),
             fechaNacimiento: regData.fechaNacimiento,
-            regimen: regData.regimen,
-            celular: regData.celular.trim(),
-            correo: regData.correo.trim()
+            tipoIdentificacion: regData.tipoIdentificacion,
+            regimen: regData.regimen
         });
 
         if (ok) {
-            setRegData({ nombre: '', id: '', fechaNacimiento: '', regimen: '', celular: '', correo: '' });
+            setRegData({ nombre: '', id: '', fechaNacimiento: '', tipoIdentificacion: '', regimen: '' });
             setTab('login');
         }
     }
 
     return (
-        <section id="auth-section" className="glass-card">
+        <section id="auth-section" className={`glass-card${tab === 'register' ? ' registration-open' : ''}`}>
             <div className="tabs">
                 <button
                     className={`tab-btn${tab === 'login' ? ' active' : ''}`}
@@ -105,7 +109,7 @@ export default function AuthSection() {
                 <button type="submit" className="btn-primary">Acceder al Sistema</button>
             </form>
 
-            <form className={`auth-form${tab === 'register' ? ' active' : ''}`} onSubmit={handleRegister}>
+            <form className={`auth-form registration-form${tab === 'register' ? ' active' : ''}`} onSubmit={handleRegister}>
                 <h3>Registrarse</h3>
                 <div className="form-group">
                     <label htmlFor="reg-name">Nombre Completo</label>
@@ -128,8 +132,32 @@ export default function AuthSection() {
                     <input
                         type="date" id="reg-dob" required
                         value={regData.fechaNacimiento}
-                        onChange={e => setRegData({ ...regData, fechaNacimiento: e.target.value })}
+                        onChange={e => {
+                            const fechaNacimiento = e.target.value;
+                            setRegData(prev => ({
+                                ...prev,
+                                fechaNacimiento,
+                                tipoIdentificacion: calcularEdad(fechaNacimiento) >= 18
+                                    ? 'CEDULA'
+                                    : prev.tipoIdentificacion
+                            }));
+                        }}
                     />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="reg-document-type">Tipo de Documento de Identificación</label>
+                    <select
+                        id="reg-document-type" required
+                        value={regData.tipoIdentificacion}
+                        onChange={e => setRegData({ ...regData, tipoIdentificacion: e.target.value })}
+                    >
+                        <option value="" disabled>Seleccione una opción...</option>
+                        {tiposDocumentoDisponibles.map(tipo => (
+                            <option key={tipo.valor} value={tipo.valor}>
+                                {tipo.valor === 'CEDULA' ? 'Cédula' : tipo.etiqueta}
+                            </option>
+                        ))}
+                    </select>
                 </div>
                 <div className="form-group">
                     <label htmlFor="reg-regimen">Tipo de Régimen</label>
@@ -142,22 +170,6 @@ export default function AuthSection() {
                         <option value="Contributivo">Contributivo</option>
                         <option value="Subsidiado">Subsidiado</option>
                     </select>
-                </div>
-                <div className="form-group">
-                    <label htmlFor="reg-celular">Número de Celular</label>
-                    <input
-                        type="tel" id="reg-celular" required autoComplete="tel"
-                        value={regData.celular}
-                        onChange={e => setRegData({ ...regData, celular: e.target.value })}
-                    />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="reg-email">Correo Electrónico</label>
-                    <input
-                        type="email" id="reg-email" required autoComplete="email"
-                        value={regData.correo}
-                        onChange={e => setRegData({ ...regData, correo: e.target.value })}
-                    />
                 </div>
                 <button type="submit" className="btn-primary">Finalizar Registro</button>
             </form>

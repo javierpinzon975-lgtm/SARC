@@ -1,5 +1,81 @@
 package com.sarc.backend.service;
-import com.sarc.backend.model.*; import com.sarc.backend.dto.*; import com.sarc.backend.repo.*; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional; import java.time.*;
-@Service public class CitaService { private final CitaRepository citas; private final UsuarioService usuarios; public CitaService(CitaRepository c,UsuarioService u){citas=c;usuarios=u;}
- @Transactional public Cita crear(CitaRequest x){if(x.fecha().atTime(x.hora()).isBefore(LocalDateTime.now()))throw new BusinessException("No se puede agendar una cita pasada"); Usuario m=usuarios.get(x.medicoId());if(m.getTipo()!=Enums.TipoUsuario.MEDICO)throw new BusinessException("El usuario no es médico");if(citas.existsByMedicoIdAndFechaAndHoraAndEstadoNot(m.getId(),x.fecha(),x.hora(),Enums.EstadoCita.CANCELADA))throw new BusinessException("El médico ya tiene una cita activa en ese horario"); Cita c=new Cita();c.setPaciente(usuarios.get(x.pacienteId()));c.setMedico(m);if(x.recepcionistaId()!=null)c.setRecepcionista(usuarios.get(x.recepcionistaId()));c.setFecha(x.fecha());c.setHora(x.hora());c.setMotivo(x.motivo());return citas.save(c);}
- public Cita cancelar(Long id){Cita c=citas.findById(id).orElseThrow(()->new BusinessException("Cita no existe"));if(c.getEstado()==Enums.EstadoCita.CANCELADA) return c;c.setEstado(Enums.EstadoCita.CANCELADA);return citas.save(c);} public Cita get(Long id){return citas.findById(id).orElseThrow(()->new BusinessException("Cita no existe"));} public Object all(){return citas.findAll();}}
+
+import com.sarc.backend.dto.CitaRequest;
+import com.sarc.backend.dto.CitaResponse;
+import com.sarc.backend.model.Cita;
+import com.sarc.backend.model.Enums;
+import com.sarc.backend.model.Usuario;
+import com.sarc.backend.repo.CitaRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class CitaService {
+    private final CitaRepository citas;
+    private final UsuarioService usuarios;
+
+    public CitaService(CitaRepository citas, UsuarioService usuarios) {
+        this.citas = citas;
+        this.usuarios = usuarios;
+    }
+
+    @Transactional
+    public CitaResponse crear(CitaRequest solicitud) {
+        if (solicitud.fecha().atTime(solicitud.hora()).isBefore(LocalDateTime.now())) {
+            throw new BusinessException("No se puede agendar una cita pasada");
+        }
+
+        Usuario paciente = usuarios.get(solicitud.pacienteId());
+        if (paciente.getTipo() != Enums.TipoUsuario.PACIENTE) {
+            throw new BusinessException("El usuario seleccionado no es paciente");
+        }
+
+        Usuario medico = usuarios.get(solicitud.medicoId());
+        if (medico.getTipo() != Enums.TipoUsuario.MEDICO) {
+            throw new BusinessException("El usuario seleccionado no es médico");
+        }
+        if (citas.existsByMedicoIdAndFechaAndHoraAndEstadoNot(
+                medico.getId(), solicitud.fecha(), solicitud.hora(), Enums.EstadoCita.CANCELADA)) {
+            throw new BusinessException("El médico ya tiene una cita activa en ese horario");
+        }
+
+        Cita cita = new Cita();
+        cita.setPaciente(paciente);
+        cita.setMedico(medico);
+        if (solicitud.recepcionistaId() != null) {
+            Usuario recepcionista = usuarios.get(solicitud.recepcionistaId());
+            if (recepcionista.getTipo() != Enums.TipoUsuario.RECEPCIONISTA) {
+                throw new BusinessException("El usuario seleccionado no es recepcionista");
+            }
+            cita.setRecepcionista(recepcionista);
+        }
+        cita.setFecha(solicitud.fecha());
+        cita.setHora(solicitud.hora());
+        cita.setMotivo(solicitud.motivo());
+        cita.setTelefonoContacto(solicitud.telefono());
+        cita.setCorreoContacto(solicitud.correo());
+        return CitaResponse.from(citas.save(cita));
+    }
+
+    @Transactional
+    public CitaResponse cancelar(Long id) {
+        Cita cita = get(id);
+        if (cita.getEstado() != Enums.EstadoCita.CANCELADA) {
+            cita.setEstado(Enums.EstadoCita.CANCELADA);
+            citas.save(cita);
+        }
+        return CitaResponse.from(cita);
+    }
+
+    @Transactional(readOnly = true)
+    public Cita get(Long id) {
+        return citas.findById(id).orElseThrow(() -> new BusinessException("Cita no existe"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CitaResponse> all() {
+        return citas.findAll().stream().map(CitaResponse::from).toList();
+    }
+}

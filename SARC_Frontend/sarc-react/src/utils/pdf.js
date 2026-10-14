@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getBase64ImageFromUrl } from './helpers';
+import { getBase64ImageFromUrl, obtenerEtiquetaTipoIdentificacion } from './helpers';
 
 // Genera el PDF de un parte médico específico
 export async function generarPDFParte(cita, parte, edad, medicoNombre, medicoId) {
@@ -36,8 +36,8 @@ export async function generarPDFParte(cita, parte, edad, medicoNombre, medicoId)
     doc.text('DATOS DEL PACIENTE', 120, 46);
     doc.setFont(undefined, 'normal');
     doc.text(`Nombre Completo: ${cita.pacienteNombre}`, 120, 52);
-    doc.text(`No. Identificacion (Cedula): ${cita.pacienteId}`, 120, 58);
-    doc.text(`Edad: ${edad} anos`, 120, 64);
+    doc.text(`${obtenerEtiquetaTipoIdentificacion(parte.tipoIdentificacion || cita.tipoIdentificacion)}: ${cita.pacienteId}`, 120, 58);
+    doc.text(`Edad: ${edad} años`, 120, 64);
 
     doc.setFont(undefined, 'bold');
     doc.text('FECHA Y HORA DE ATENCION', 14, 74);
@@ -106,7 +106,7 @@ export async function generarPDFParte(cita, parte, edad, medicoNombre, medicoId)
 }
 
 // Genera el PDF del historial clínico completo
-export async function generarPDFHistorial(nombrePaciente, idPaciente, edad, historial) {
+export async function generarPDFHistorial(nombrePaciente, idPaciente, edad, historial, tipoIdentificacion = 'CEDULA') {
     const doc = new jsPDF();
 
     try {
@@ -132,8 +132,9 @@ export async function generarPDFHistorial(nombrePaciente, idPaciente, edad, hist
     doc.text('DATOS DEL PACIENTE', 14, 46);
     doc.setFont(undefined, 'normal');
     doc.text(`Nombre Completo: ${nombrePaciente}`, 14, 52);
-    doc.text(`No. Identificacion (Cedula): ${idPaciente}`, 14, 58);
-    doc.text(`Edad: ${edad} anos`, 14, 64);
+    const etiquetaIdentificacion = obtenerEtiquetaTipoIdentificacion(tipoIdentificacion).replace(/\s*\([^)]*\)/, '');
+    doc.text(`${etiquetaIdentificacion}: ${idPaciente}`, 14, 58);
+    doc.text(`Edad: ${edad} años`, 14, 64);
     doc.text(`Total de atenciones registradas: ${historial.length}`, 14, 70);
 
     doc.line(14, 74, 196, 74);

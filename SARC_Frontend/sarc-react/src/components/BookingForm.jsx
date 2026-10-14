@@ -1,19 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MEDICOS, ESPECIALIDADES, BLOQUES_HORARIOS } from '../data/constants';
-import { obtenerFechaActualISO } from '../utils/helpers';
+import { BLOQUES_HORARIOS } from '../data/constants';
+import { obtenerFechaActualISO, puedeAgendarseLaCita } from '../utils/helpers';
 
 const initialForm = {
     phone: '', email: '', specialty: '', doctorId: '', date: '', time: ''
 };
 
 export default function BookingForm() {
-    const { currentUser, citasGlobales, agendarCita } = useApp();
+    const { currentUser, citasGlobales, medicos, especialidades, agendarCita } = useApp();
     const [form, setForm] = useState(initialForm);
+    const [ahora, setAhora] = useState(() => Date.now());
+    const [guardando, setGuardando] = useState(false);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => setAhora(Date.now()), 30 * 1000);
+        return () => window.clearInterval(intervalId);
+    }, []);
 
     const medicosFiltrados = useMemo(
-        () => (form.specialty ? MEDICOS.filter(m => m.especialidad === form.specialty) : []),
-        [form.specialty]
+        () => (form.specialty ? medicos.filter(m => m.especialidad === form.specialty) : []),
+        [form.specialty, medicos]
     );
 
     const horasDisponibles = useMemo(() => {
@@ -21,8 +28,11 @@ export default function BookingForm() {
         const horasOcupadas = citasGlobales
             .filter(c => c.medicoId === form.doctorId && c.fecha === form.date && c.estado !== 'Cancelada')
             .map(c => c.hora);
-        return BLOQUES_HORARIOS.filter(h => !horasOcupadas.includes(h));
-    }, [form.doctorId, form.date, citasGlobales]);
+        return BLOQUES_HORARIOS.filter(h =>
+            !horasOcupadas.includes(h)
+            && (form.date !== obtenerFechaActualISO() || puedeAgendarseLaCita(form.date, h, ahora))
+        );
+    }, [form.doctorId, form.date, citasGlobales, ahora]);
 
     function updateField(field, val) {
         setForm(prev => {
@@ -33,23 +43,22 @@ export default function BookingForm() {
         });
     }
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
-        const medicoObj = MEDICOS.find(m => m.id === form.doctorId);
-        if (!medicoObj) return;
-        const agendada = agendarCita({
-            pacienteNombre: currentUser.nombre,
-            pacienteId: currentUser.id,
-            celular: form.phone,
-            correo: form.email,
-            especialidad: form.specialty,
-            medicoNombre: medicoObj.nombre,
-            medicoId: form.doctorId,
-            fecha: form.date,
-            hora: form.time
-        });
-
-        if (agendada) setForm(initialForm);
+        setGuardando(true);
+        try {
+            const agendada = await agendarCita({
+                celular: form.phone,
+                correo: form.email,
+                especialidad: form.specialty,
+                medicoId: form.doctorId,
+                fecha: form.date,
+                hora: form.time
+            });
+            if (agendada) setForm(initialForm);
+        } finally {
+            setGuardando(false);
+        }
     }
 
     return (
@@ -85,8 +94,10 @@ export default function BookingForm() {
                     value={form.specialty}
                     onChange={e => updateField('specialty', e.target.value)}
                 >
-                    <option value="" disabled>Seleccione la especialidad...</option>
-                    {ESPECIALIDADES.map(esp => <option key={esp} value={esp}>{esp}</option>)}
+                    <option value="" disabled>
+                        {especialidades.length ? 'Seleccione la especialidad...' : 'Cargando especialidades...'}
+                    </option>
+                    {especialidades.map(esp => <option key={esp} value={esp}>{esp}</option>)}
                 </select>
             </div>
             <div className="form-group">
@@ -127,7 +138,9 @@ export default function BookingForm() {
                     </select>
                 </div>
             </div>
-            <button type="submit" className="btn-success">Agendar Cita Médica</button>
+            <button type="submit" className="btn-success" disabled={guardando || medicos.length === 0}>
+                {guardando ? 'Agendando...' : 'Agendar Cita Médica'}
+            </button>
         </form>
     );
 }

@@ -1,6 +1,5 @@
 import { useApp } from './context/AppContext';
 import Header from './components/Header';
-import WelcomeOverlay from './components/WelcomeOverlay';
 import AuthSection from './components/AuthSection';
 import Panel_Paciente from './components/Panel_Paciente';
 import Panel_Recepcionista from './components/Panel_Recepcionista';
@@ -13,7 +12,6 @@ export default function App() {
         <>
             <div className="background-overlay"></div>
             <Header />
-            <WelcomeOverlay />
 
             <div className="main-container">
                 {!currentUser && <AuthSection />}

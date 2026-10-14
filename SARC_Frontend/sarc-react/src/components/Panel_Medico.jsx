@@ -6,10 +6,15 @@ import AgendaCalendario from './AgendaCalendario';
 import MiniCalendario from './MiniCalendario';
 
 export default function DoctorPanel() {
-    const { currentUser, obtenerAgendaPorFecha, historialesClinicos, logout } = useApp();
+    const { currentUser, citasGlobales, obtenerAgendaPorFecha, historialesClinicos, logout } = useApp();
     const [citaAbiertaId, setCitaAbiertaId] = useState(null);
     const [fechaSeleccionada, setFechaSeleccionada] = useState(obtenerFechaActualISO());
 
+    const fechasConCitas = [...new Set(
+        citasGlobales
+            .filter(c => c.medicoId === currentUser.id)
+            .map(c => c.fecha)
+    )];
     const citasDelDia = obtenerAgendaPorFecha(fechaSeleccionada)
         .filter(c => c.medicoId === currentUser.id && ['Confirmada', 'Terminada'].includes(c.estado));
 
@@ -40,6 +45,7 @@ export default function DoctorPanel() {
                     <MiniCalendario
                         fechaSeleccionada={fechaSeleccionada}
                         onChange={setFechaSeleccionada}
+                        fechasConCitas={fechasConCitas}
                     />
                     <div className="selected-date-note">
                         <span>Fecha seleccionada</span>
