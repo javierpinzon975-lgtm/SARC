@@ -1,21 +1,26 @@
 package com.sarc.backend.config;
 
+import java.util.List;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import com.sarc.backend.model.Enums;
 import com.sarc.backend.model.Especialidad;
 import com.sarc.backend.model.Usuario;
 import com.sarc.backend.repo.EspecialidadRepository;
 import com.sarc.backend.repo.UsuarioRepository;
-import java.util.List;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class DemoDataInitializer {
     private record Medico(String nombre, String identificacion, String especialidad) {}
 
     @Bean
-    CommandLineRunner inicializarDatos(EspecialidadRepository especialidades, UsuarioRepository usuarios) {
+    public CommandLineRunner inicializarDatos(
+            EspecialidadRepository especialidades,
+            UsuarioRepository usuarios
+    ) {
         return args -> {
             List<String> nombresEspecialidad = List.of(
                     "Medicina General",
@@ -69,3 +74,4 @@ public class DemoDataInitializer {
             }
         };
     }
+}

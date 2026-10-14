@@ -9,6 +9,7 @@ import com.sarc.backend.model.ParteMedico;
 import com.sarc.backend.repo.ParteRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +24,7 @@ public class ParteService {
     }
 
     @Transactional
-    public ParteResponse guardar(Long citaId, ParteRequest solicitud) {
+    public ParteResponse guardar(@NonNull Long citaId, ParteRequest solicitud) {
         var cita = citas.get(citaId);
         if (cita.getFecha().atTime(cita.getHora()).isAfter(LocalDateTime.now())) {
             throw new BusinessException("La cita aún no ha sido atendida");

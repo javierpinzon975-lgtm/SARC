@@ -11,6 +11,7 @@ import com.sarc.backend.repo.UsuarioRepository;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,8 +45,9 @@ public class UsuarioService {
         usuario.setTelefono(solicitud.telefono());
         usuario.setCorreo(solicitud.correo());
 
-        if (solicitud.especialidadId() != null) {
-            Especialidad especialidad = especialidades.findById(solicitud.especialidadId())
+        Long especialidadId = solicitud.especialidadId();
+        if (especialidadId != null) {
+            Especialidad especialidad = especialidades.findById(especialidadId)
                     .orElseThrow(() -> new BusinessException("Especialidad no existe"));
             usuario.setEspecialidad(especialidad);
         }
@@ -80,7 +82,7 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public Usuario get(Long id) {
+    public Usuario get(@NonNull Long id) {
         return usuarios.findById(id).orElseThrow(() -> new BusinessException("Usuario no existe"));
     }
 

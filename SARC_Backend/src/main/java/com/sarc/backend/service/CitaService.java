@@ -1,15 +1,19 @@
 package com.sarc.backend.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sarc.backend.dto.CitaRequest;
 import com.sarc.backend.dto.CitaResponse;
 import com.sarc.backend.model.Cita;
 import com.sarc.backend.model.Enums;
 import com.sarc.backend.model.Usuario;
 import com.sarc.backend.repo.CitaRepository;
-import java.time.LocalDateTime;
-import java.util.List;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CitaService {
@@ -23,16 +27,18 @@ public class CitaService {
 
     @Transactional
     public CitaResponse crear(CitaRequest solicitud) {
+        Long pacienteId = Objects.requireNonNull(solicitud.pacienteId(), "pacienteId es obligatorio");
+        Long medicoId = Objects.requireNonNull(solicitud.medicoId(), "medicoId es obligatorio");
         if (solicitud.fecha().atTime(solicitud.hora()).isBefore(LocalDateTime.now())) {
             throw new BusinessException("No se puede agendar una cita pasada");
         }
 
-        Usuario paciente = usuarios.get(solicitud.pacienteId());
+        Usuario paciente = usuarios.get(pacienteId);
         if (paciente.getTipo() != Enums.TipoUsuario.PACIENTE) {
             throw new BusinessException("El usuario seleccionado no es paciente");
         }
 
-        Usuario medico = usuarios.get(solicitud.medicoId());
+        Usuario medico = usuarios.get(medicoId);
         if (medico.getTipo() != Enums.TipoUsuario.MEDICO) {
             throw new BusinessException("El usuario seleccionado no es médico");
         }
@@ -44,8 +50,9 @@ public class CitaService {
         Cita cita = new Cita();
         cita.setPaciente(paciente);
         cita.setMedico(medico);
-        if (solicitud.recepcionistaId() != null) {
-            Usuario recepcionista = usuarios.get(solicitud.recepcionistaId());
+        Long recepcionistaId = solicitud.recepcionistaId();
+        if (recepcionistaId != null) {
+            Usuario recepcionista = usuarios.get(recepcionistaId);
             if (recepcionista.getTipo() != Enums.TipoUsuario.RECEPCIONISTA) {
                 throw new BusinessException("El usuario seleccionado no es recepcionista");
             }
@@ -60,7 +67,7 @@ public class CitaService {
     }
 
     @Transactional
-    public CitaResponse cancelar(Long id) {
+    public CitaResponse cancelar(@NonNull Long id) {
         Cita cita = get(id);
         if (cita.getEstado() != Enums.EstadoCita.CANCELADA) {
             cita.setEstado(Enums.EstadoCita.CANCELADA);
@@ -70,7 +77,7 @@ public class CitaService {
     }
 
     @Transactional(readOnly = true)
-    public Cita get(Long id) {
+    public Cita get(@NonNull Long id) {
         return citas.findById(id).orElseThrow(() -> new BusinessException("Cita no existe"));
     }
 
