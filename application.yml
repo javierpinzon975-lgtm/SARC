@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:mysql://bel11wla7q7qfhb6lt2q-mysql.services.clever-cloud.com:3306/bel11wla7q7qfhb6lt2q?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&autoReconnect=true
+    username: ukkvihese78tx714
+    password: KZ8eZz4oYfwHrm0vzd2z
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 300000
+      max-lifetime: 600000
+      connection-timeout: 20000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
