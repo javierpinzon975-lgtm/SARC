@@ -1,0 +1,5 @@
+com\sarc\backend\DatabaseMigrationTest.class
+com\sarc\backend\RecordatorioServiceTest.class
+com\sarc\backend\SecurityIntegrationTest.class
+com\sarc\backend\UsuarioPersistenceTest.class
+com\sarc\backend\CitaServiceTest.class

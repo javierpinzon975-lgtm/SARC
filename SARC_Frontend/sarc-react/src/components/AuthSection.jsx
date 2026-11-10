@@ -1,0 +1,220 @@
+import { useState } from 'react';
+import { useApp } from '../context/AppContext';
+import { TIPOS_IDENTIFICACION } from '../data/constants';
+import { calcularEdad } from '../utils/helpers';
+
+export default function AuthSection() {
+    const [tab, setTab] = useState('login');
+    const [showLoginId, setShowLoginId] = useState(false);
+    const { login, registrarPaciente } = useApp();
+
+    const [loginData, setLoginData] = useState({
+        nombre: '',
+        id: '',
+        password: '',
+        tipo: 'PACIENTE'
+    });
+    const [regData, setRegData] = useState({
+        nombre: '',
+        id: '',
+        password: '',
+        fechaNacimiento: '',
+        tipoIdentificacion: '',
+        regimen: ''
+    });
+    const edadRegistro = calcularEdad(regData.fechaNacimiento);
+    const tiposDocumentoDisponibles = edadRegistro !== null && edadRegistro >= 18
+        ? TIPOS_IDENTIFICACION.filter(tipo => tipo.valor === 'CEDULA')
+        : TIPOS_IDENTIFICACION;
+
+    function handleLogin(e) {
+        e.preventDefault();
+        login({
+            nombre: loginData.nombre.trim(),
+            id: loginData.id.trim(),
+            password: loginData.password,
+            tipo: loginData.tipo
+        });
+    }
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        const ok = await registrarPaciente({
+            nombre: regData.nombre.trim(),
+            id: regData.id.trim(),
+            password: regData.password,
+            fechaNacimiento: regData.fechaNacimiento,
+            tipoIdentificacion: regData.tipoIdentificacion,
+            regimen: regData.regimen
+        });
+
+        if (ok) {
+            setRegData({ nombre: '', id: '', password: '', fechaNacimiento: '', tipoIdentificacion: '', regimen: '' });
+            setTab('login');
+        }
+    }
+
+    return (
+        <section id="auth-section" className={`glass-card${tab === 'register' ? ' registration-open' : ''}`}>
+            <div className="tabs">
+                <button
+                    className={`tab-btn${tab === 'login' ? ' active' : ''}`}
+                    onClick={() => setTab('login')}
+                    type="button"
+                >
+                    Iniciar Sesión
+                </button>
+                <button
+                    className={`tab-btn${tab === 'register' ? ' active' : ''}`}
+                    onClick={() => setTab('register')}
+                    type="button"
+                >
+                    Registrarse
+                </button>
+            </div>
+
+            <form className={`auth-form${tab === 'login' ? ' active' : ''}`} onSubmit={handleLogin}>
+                <h3>Ingreso al Sistema</h3>
+                <div className="form-group">
+                    <label htmlFor="login-type">Tipo de cuenta</label>
+                    <select
+                        id="login-type"
+                        required
+                        value={loginData.tipo}
+                        onChange={e => setLoginData({ ...loginData, tipo: e.target.value })}
+                    >
+                        <option value="PACIENTE">Paciente</option>
+                        <option value="MEDICO">Médico</option>
+                        <option value="RECEPCIONISTA">Recepcionista</option>
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="login-name">Nombre Completo</label>
+                    <input
+                        type="text" id="login-name" required autoComplete="off"
+                        value={loginData.nombre}
+                        onChange={e => setLoginData({ ...loginData, nombre: e.target.value })}
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="login-id">Número de Identificación</label>
+                    <div className="password-input">
+                        <input
+                            type={showLoginId ? 'text' : 'password'} id="login-id" required autoComplete="off"
+                            value={loginData.id}
+                            onChange={e => setLoginData({ ...loginData, id: e.target.value })}
+                        />
+                        <button
+                            type="button"
+                            className="password-toggle"
+                            onClick={() => setShowLoginId(!showLoginId)}
+                            aria-label={showLoginId ? 'Ocultar identificación' : 'Mostrar identificación'}
+                            aria-pressed={showLoginId}
+                            title={showLoginId ? 'Ocultar identificación' : 'Mostrar identificación'}
+                        >
+                            {showLoginId ? (
+                                <>
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.8 10.8 0 0 1 12 5c5.2 0 8.7 4.2 9.8 7-.4 1-1.2 2.2-2.3 3.3M6.2 6.2C4.6 7.4 3.2 9.2 2.2 12c1.1 2.8 4.6 7 9.8 7 1.1 0 2.1-.2 3-.5" />
+                                    </svg>
+                                    <span>Ocultar</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M2.2 12C3.3 9.2 6.8 5 12 5s8.7 4.2 9.8 7c-1.1 2.8-4.6 7-9.8 7s-8.7-4.2-9.8-7Z" />
+                                        <circle cx="12" cy="12" r="2.5" />
+                                    </svg>
+                                    <span>Mostrar</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="login-password">Contraseña</label>
+                    <input
+                        type="password" id="login-password" required autoComplete="current-password"
+                        value={loginData.password}
+                        onChange={e => setLoginData({ ...loginData, password: e.target.value })}
+                    />
+                </div>
+                <button type="submit" className="btn-primary">Acceder al Sistema</button>
+            </form>
+
+            <form className={`auth-form registration-form${tab === 'register' ? ' active' : ''}`} onSubmit={handleRegister}>
+                <h3>Registrarse</h3>
+                <div className="form-group">
+                    <label htmlFor="reg-name">Nombre Completo</label>
+                    <input
+                        type="text" id="reg-name" required autoComplete="off"
+                        value={regData.nombre}
+                        onChange={e => setRegData({ ...regData, nombre: e.target.value })}
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="reg-id">Número de Identificación</label>
+                    <input
+                        type="text" id="reg-id" required autoComplete="off"
+                        value={regData.id}
+                        onChange={e => setRegData({ ...regData, id: e.target.value })}
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="reg-password">Crear contraseña</label>
+                    <input
+                        type="password" id="reg-password" required minLength="8" maxLength="72"
+                        autoComplete="new-password"
+                        value={regData.password}
+                        onChange={e => setRegData({ ...regData, password: e.target.value })}
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="reg-dob">Fecha de Nacimiento</label>
+                    <input
+                        type="date" id="reg-dob" required
+                        value={regData.fechaNacimiento}
+                        onChange={e => {
+                            const fechaNacimiento = e.target.value;
+                            setRegData(prev => ({
+                                ...prev,
+                                fechaNacimiento,
+                                tipoIdentificacion: calcularEdad(fechaNacimiento) >= 18
+                                    ? 'CEDULA'
+                                    : prev.tipoIdentificacion
+                            }));
+                        }}
+                    />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="reg-document-type">Tipo de Documento de Identificación</label>
+                    <select
+                        id="reg-document-type" required
+                        value={regData.tipoIdentificacion}
+                        onChange={e => setRegData({ ...regData, tipoIdentificacion: e.target.value })}
+                    >
+                        <option value="" disabled>Seleccione una opción...</option>
+                        {tiposDocumentoDisponibles.map(tipo => (
+                            <option key={tipo.valor} value={tipo.valor}>
+                                {tipo.valor === 'CEDULA' ? 'Cédula' : tipo.etiqueta}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="reg-regimen">Tipo de Régimen</label>
+                    <select
+                        id="reg-regimen" required
+                        value={regData.regimen}
+                        onChange={e => setRegData({ ...regData, regimen: e.target.value })}
+                    >
+                        <option value="" disabled>Seleccione una opción...</option>
+                        <option value="Contributivo">Contributivo</option>
+                        <option value="Subsidiado">Subsidiado</option>
+                    </select>
+                </div>
+                <button type="submit" className="btn-primary">Finalizar Registro</button>
+            </form>
+        </section>
+    );
+}
