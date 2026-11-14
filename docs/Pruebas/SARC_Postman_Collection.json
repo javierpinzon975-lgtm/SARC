@@ -1,1 +1,467 @@
-
+{
+  "info": {
+    "_postman_id": "5f94f2e8-1dfd-48e7-92ad-sarc-api-test-20261022",
+    "name": "SARC - Pruebas API (local H2)",
+    "description": "Colección guiada para probar la API local de SARC. Ejecutar en orden con el backend Spring Boot activo en http://localhost:8080 y la base H2 de prueba. Solo usa datos ficticios. Las solicitudes guardan IDs automáticamente. Las pruebas de duplicidad y cancelación son intencionales.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Consultar especialidades",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/especialidades",
+        "description": "Prueba de lectura. Debe responder HTTP 200 con la lista de especialidades."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });",
+              "pm.test(\"Hay especialidades registradas\", function () { pm.expect(pm.response.json().length).to.be.above(0); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Buscar médico de prueba",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/usuarios?tipo=MEDICO",
+        "description": "Busca al médico sembrado para las pruebas y guarda su ID como variable de colección."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "const usuarios = pm.response.json();",
+              "const medico = usuarios.find(u => u.nombre === \"Andrés Salazar Gómez\");",
+              "pm.test(\"Existe Andrés Salazar Gómez\", function () { pm.expect(medico).to.exist; });",
+              "if (medico) { pm.collectionVariables.set(\"medicoId\", String(medico.id)); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Buscar recepcionista de prueba",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/usuarios?tipo=RECEPCIONISTA",
+        "description": "Busca la cuenta de demostración Carlos Andres Medina y guarda su ID."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "const usuarios = pm.response.json();",
+              "const recepcionista = usuarios.find(u => u.nombre === \"Carlos Andres Medina\");",
+              "pm.test(\"Existe Carlos Andres Medina\", function () { pm.expect(recepcionista).to.exist; });",
+              "if (recepcionista) { pm.collectionVariables.set(\"recepcionistaId\", String(recepcionista.id)); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Registrar paciente de prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/usuarios",
+        "description": "Crea un paciente ficticio. La identificación se genera en cada ejecución de la colección para evitar duplicados.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"identificacion\": \"{{testIdentificacion}}\",\n  \"nombre\": \"Paciente de Prueba Postman\",\n  \"tipo\": \"PACIENTE\",\n  \"fechaNacimiento\": \"1997-03-20\",\n  \"tipoIdentificacion\": \"CEDULA\",\n  \"regimen\": \"CONTRIBUTIVO\",\n  \"telefono\": \"3001234567\",\n  \"correo\": \"prueba.api.sarc@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const id = \"SARC\" + Date.now().toString().slice(-10);",
+              "pm.collectionVariables.set(\"testIdentificacion\", id);",
+              "pm.collectionVariables.set(\"testNombre\", \"Paciente de Prueba Postman\");"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Paciente creado; HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "if (pm.response.code === 200) {",
+              "  const paciente = pm.response.json();",
+              "  pm.collectionVariables.set(\"pacienteId\", String(paciente.id));",
+              "  pm.test(\"La API devuelve un ID de paciente\", function () { pm.expect(paciente.id).to.exist; });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Iniciar sesión con el paciente de prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/usuarios/login",
+        "description": "Comprueba el endpoint de inicio de sesión usando los datos creados por la solicitud anterior.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"{{testNombre}}\",\n  \"identificacion\": \"{{testIdentificacion}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Login correcto; HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La respuesta corresponde al paciente\", function () { pm.expect(pm.response.json().tipo).to.eql(\"PACIENTE\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Rechazar inicio de sesión incorrecto",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/usuarios/login",
+        "description": "Prueba negativa: las credenciales que no existen deben ser rechazadas con HTTP 400 y mensaje de error.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Usuario Incorrecto\",\n  \"identificacion\": \"0000000000\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Credenciales incorrectas rechazadas; HTTP 400\", function () { pm.response.to.have.status(400); });",
+              "pm.test(\"La respuesta explica el error\", function () { pm.expect(pm.response.json()).to.have.property(\"error\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Consultar citas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/citas",
+        "description": "Consulta las citas existentes en la base H2 local."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Crear cita para el paciente de prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/citas",
+        "description": "Genera una cita futura con el paciente y el médico local de demostración. Guarda el ID de la cita.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"medicoId\": {{medicoId}},\n  \"recepcionistaId\": {{recepcionistaId}},\n  \"fecha\": \"{{fechaCita}}\",\n  \"hora\": \"10:30:00\",\n  \"motivo\": \"Prueba de API desde Postman\",\n  \"telefono\": \"3001234567\",\n  \"correo\": \"prueba.api.sarc@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const fecha = new Date();",
+              "fecha.setDate(fecha.getDate() + 10);",
+              "const yyyy = fecha.getFullYear();",
+              "const mm = String(fecha.getMonth() + 1).padStart(2, \"0\");",
+              "const dd = String(fecha.getDate()).padStart(2, \"0\");",
+              "pm.collectionVariables.set(\"fechaCita\", `${yyyy}-${mm}-${dd}`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Cita creada; HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "if (pm.response.code === 200) {",
+              "  const cita = pm.response.json();",
+              "  pm.collectionVariables.set(\"citaId\", String(cita.id));",
+              "  pm.test(\"La cita tiene ID\", function () { pm.expect(cita.id).to.exist; });",
+              "  pm.test(\"La cita inicia programada\", function () { pm.expect(cita.estado).to.eql(\"PROGRAMADA\"); });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Rechazar cita duplicada",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/citas",
+        "description": "Prueba negativa: envía los mismos paciente/médico/fecha/hora y espera que la API rechace el horario duplicado.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"medicoId\": {{medicoId}},\n  \"recepcionistaId\": {{recepcionistaId}},\n  \"fecha\": \"{{fechaCita}}\",\n  \"hora\": \"10:30:00\",\n  \"motivo\": \"Prueba de API desde Postman\",\n  \"telefono\": \"3001234567\",\n  \"correo\": \"prueba.api.sarc@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"El horario duplicado se rechaza; HTTP 400\", function () { pm.response.to.have.status(400); });",
+              "pm.test(\"La respuesta informa el conflicto\", function () { pm.expect(pm.response.json().error).to.include(\"horario\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Rechazar parte médico de una cita futura",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/partes-medicos/{{citaId}}",
+        "description": "Prueba negativa de la regla de negocio: el backend no debe permitir emitir un parte antes de la atención de la cita.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"diagnostico\": \"Diagnóstico de prueba\",\n  \"evolucion\": \"Evolución de prueba\",\n  \"tratamiento\": \"Tratamiento de prueba\",\n  \"observaciones\": \"Dato ficticio para validar la API\",\n  \"medicamentos\": [],\n  \"medicoId\": {{medicoId}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"No permite emitir un parte para una cita futura; HTTP 400\", function () { pm.response.to.have.status(400); });",
+              "pm.test(\"La respuesta explica que la cita aún no ha sido atendida\", function () { pm.expect(pm.response.json().error).to.include(\"atendida\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Cancelar la cita creada",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": "{{baseUrl}}/citas/{{citaId}}/cancelar",
+        "description": "Cancela la cita creada por esta colección. No lleva cuerpo JSON."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Cancelación correcta; HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La cita queda CANCELADA\", function () { pm.expect(pm.response.json().estado).to.eql(\"CANCELADA\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - Verificar que la cita quedó cancelada",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/citas",
+        "description": "Vuelve a consultar las citas y verifica el estado guardado de la cita de prueba."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "const citas = pm.response.json();",
+              "const citaId = String(pm.collectionVariables.get(\"citaId\"));",
+              "const cita = citas.find(c => String(c.id) === citaId);",
+              "pm.test(\"La cita creada se encuentra en el listado\", function () { pm.expect(cita).to.exist; });",
+              "pm.test(\"El estado persistido es CANCELADA\", function () { pm.expect(cita.estado).to.eql(\"CANCELADA\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Consultar partes médicos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/partes-medicos",
+        "description": "Comprueba que el endpoint de lectura de partes médicos responde. Puede devolver una lista vacía."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "testIdentificacion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testNombre",
+      "value": "Paciente de Prueba Postman",
+      "type": "string"
+    },
+    {
+      "key": "pacienteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "medicoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recepcionistaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fechaCita",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "citaId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
