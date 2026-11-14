@@ -1,57 +1,196 @@
-# SARC — Versión React
+# SARC — Frontend React
 
-Migración funcional completa del proyecto SARC (Sistema de Agendamiento, Recordatorio
-y Cancelación de Citas) desde HTML + CSS + JavaScript vanilla a **React 18 + Vite**.
+Frontend web del proyecto SARC (Sistema de Agendamiento, Recordatorio y Cancelación de Citas Médicas), desarrollado mediante React 18 y Vite.
 
-## Cómo ejecutarlo
+Esta aplicación proporciona la interfaz de usuario para los perfiles de paciente, médico y recepcionista. Se comunica con el backend Spring Boot mediante una API REST para consultar y gestionar la información del sistema.
 
-Requisitos: Node.js 18 o superior.
+## Requisitos previos
+
+Para ejecutar el frontend se requiere:
+
+- Node.js 18 o superior.
+- npm (incluido con Node.js).
+- Backend SARC en ejecución para utilizar las funcionalidades que requieren conexión con la API.
+
+## Instalación y ejecución
+
+Desde una terminal, ingresar a la carpeta del frontend:
+
+```bash
+cd SARC_Frontend/sarc-react
+```
+
+Instalar las dependencias del proyecto:
 
 ```bash
 npm install
+```
+
+Crear el archivo local de configuración a partir de la plantilla:
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+**Linux / macOS:**
+
+```bash
+cp .env.example .env.local
+```
+
+Iniciar el servidor de desarrollo:
+
+```bash
 npm run dev
 ```
 
-Esto abre el proyecto en `http://localhost:5173`.
+Vite inicia la aplicación en la siguiente dirección:
+
+```text
+http://localhost:5173
+```
 
 ## Conexión con el backend
 
-Inicie primero `SARC_Backend` en el puerto `8080`. El frontend usa
-`http://localhost:8080/api` de forma predeterminada; para cambiarlo, defina
-`VITE_API_BASE_URL` antes de ejecutar Vite, por ejemplo
-`VITE_API_BASE_URL=http://localhost:8080/api`.
+El frontend se comunica con el backend de SARC mediante solicitudes HTTP a una API REST desarrollada con Spring Boot.
 
-Los usuarios, las citas y los historiales se cargan y guardan mediante la API.
-Los datos que ya existían en `localStorage` no se migran y permanecen en el
-navegador, pero ya no se usan como fuente de datos. El backend guarda sus datos
-en `proyecto_sarc_api`, separado del esquema legado de `../../Data_Base/Data_Base.sql`.
+El backend debe estar iniciado y disponible en el puerto `8080`.
 
-Para generar la versión de producción (archivos estáticos listos para hosting):
+La dirección predeterminada de la API es:
 
-```bash
-npm run build
-npm run preview   # para previsualizar el build
+```text
+http://localhost:8080/api
 ```
+
+Esta dirección puede modificarse mediante la variable de entorno `VITE_API_BASE_URL`.
+
+### Configuración de la API
+
+El proyecto incluye el archivo `.env.example`, que contiene la configuración de referencia:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+Para utilizar una dirección diferente, modificar el valor de `VITE_API_BASE_URL` en el archivo `.env.local`.
+
+Después de modificar la configuración, reiniciar el servidor de desarrollo de Vite para que tome los nuevos valores.
+
+### Comunicación y persistencia de información
+
+El frontend utiliza el módulo `src/services/api.js` para centralizar las solicitudes hacia los endpoints del backend.
+
+Las operaciones de registro, autenticación, consulta de usuarios, gestión de citas e información clínica se realizan mediante la API.
+
+El frontend no se conecta directamente a MySQL. La persistencia de la información es administrada por el backend, que utiliza Spring Data JPA y MySQL.
+
+Los datos que existían en `localStorage` durante versiones anteriores del proyecto no se migran ni se utilizan como fuente de datos principal de la versión actual.
+
+## Tecnologías y dependencias
+
+| Tecnología / Librería | Función |
+|---|---|
+| React 18 | Construcción de interfaces mediante componentes. |
+| React DOM | Renderizado de la aplicación en el navegador. |
+| Vite 5 | Servidor de desarrollo y herramienta de compilación. |
+| JavaScript ES6+ | Lógica e interacción de la aplicación. |
+| CSS | Diseño visual y estilos de la interfaz. |
+| jsPDF | Generación de documentos PDF. |
+| jspdf-autotable | Generación de tablas en documentos PDF. |
 
 ## Estructura del proyecto
 
-```
+```text
 sarc-react/
-├── public/img/          → Background.png, Logo_PG.png, Logo_Sistema.png
+│
+├── public/
+│   └── img/
+│       ├── Background.png
+│       ├── Logo_PG.png
+│       └── Logo_Sistema.png
+│
 ├── src/
-│   ├── components/       → Un componente por cada bloque de la interfaz original
-│   ├── context/           → AppContext (usuarios, citas, historiales, sesión)
-│   │                        ToastContext (notificaciones)
-│   ├── data/constants.js  → Tipos de identificación y horarios
-│   ├── services/api.js    → Cliente REST del backend Spring Boot
+│   ├── components/
+│   │
+│   ├── context/
+│   │   ├── AppContext.jsx
+│   │   └── ToastContext.jsx
+│   │
+│   ├── data/
+│   │   └── constants.js
+│   │
+│   ├── services/
+│   │   └── api.js
+│   │
 │   ├── utils/
-│   │   ├── helpers.js             → calcularEdad, getBase64ImageFromUrl
-│   │   ├── pdf.js                 → generación de PDFs con jsPDF + autoTable
-│   │   └── usePersistentState.js  → hook legado de persistencia local
+│   │   ├── helpers.js
+│   │   ├── pdf.js
+│   │   └── usePersistentState.js
+│   │
 │   ├── App.jsx
 │   ├── main.jsx
-│   └── index.css          → mismo diseño glassmorphism del proyecto original
-└── index.html
+│   └── index.css
+│
+├── .env.example
+├── .gitignore
+├── index.html
+├── package.json
+├── package-lock.json
+└── vite.config.js
 ```
 
+### Descripción de los módulos principales
 
+| Módulo | Responsabilidad |
+|---|---|
+| `components/` | Componentes visuales y funcionales de la interfaz. |
+| `context/` | Administración del estado global, usuarios, citas, sesiones y notificaciones. |
+| `data/` | Constantes y datos de configuración utilizados por la aplicación. |
+| `services/` | Comunicación con los servicios y endpoints del backend. |
+| `utils/` | Funciones auxiliares, generación de PDF y utilidades del proyecto. |
+| `App.jsx` | Componente principal de la aplicación. |
+| `main.jsx` | Punto de entrada y renderizado de React. |
+| `index.css` | Estilos generales de la interfaz. |
+
+## Compilación para producción
+
+Para generar los archivos estáticos de producción:
+
+```bash
+npm run build
+```
+
+Vite genera el resultado de la compilación en:
+
+```text
+dist/
+```
+
+Para ejecutar una previsualización local de la versión compilada:
+
+```bash
+npm run preview
+```
+
+## Scripts disponibles
+
+| Comando | Descripción |
+|---|---|
+| `npm install` | Instala las dependencias del proyecto. |
+| `npm run dev` | Inicia el servidor de desarrollo. |
+| `npm run build` | Compila la aplicación para producción. |
+| `npm run preview` | Previsualiza localmente la compilación. |
+
+## Consideraciones de funcionamiento
+
+- El frontend requiere que el backend esté disponible para utilizar las operaciones que dependen de la API REST.
+- La dirección del backend se configura mediante `VITE_API_BASE_URL`.
+- El token de autenticación se mantiene en memoria durante la sesión; al recargar la página se debe iniciar sesión nuevamente.
+- Las dependencias del proyecto se encuentran declaradas en `package.json` y se instalan mediante `npm install`.
+- El archivo `.env.example` se conserva como plantilla de configuración. El archivo `.env.local` contiene la configuración local y no debe publicarse en el repositorio.
+
+---
+
+**SARC — Sistema de Agendamiento, Recordatorio y Cancelación de Citas Médicas**
