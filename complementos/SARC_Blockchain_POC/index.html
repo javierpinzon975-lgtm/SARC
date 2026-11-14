@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#12324a" />
+  <meta name="description" content="Prueba de concepto de trazabilidad e integridad de eventos de citas médicas mediante una cadena de hashes SHA-256." />
+  <title>SARC | Blockchain Traceability PoC</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-mark" aria-hidden="true">S</div>
+    <div>
+      <p class="eyebrow">PROYECTO FORMATIVO SARC</p>
+      <h1>Blockchain Traceability</h1>
+      <p class="subtitle">Prueba de concepto de integridad y trazabilidad de eventos de citas</p>
+    </div>
+    <span class="poc-label">PROTOTIPO ACADÉMICO</span>
+  </header>
+
+  <main class="container">
+    <section class="intro panel">
+      <div>
+        <p class="section-kicker">TECNOLOGÍA EMERGENTE</p>
+        <h2>Cadena de bloques simulada mediante SHA-256</h2>
+        <p>Este prototipo registra eventos de citas en bloques enlazados criptográficamente. Cada bloque conserva el hash del anterior; si se altera un dato, la verificación permite detectar la modificación.</p>
+      </div>
+      <div class="notice"><strong>Alcance:</strong> simulación local de una cadena de hashes. No es una blockchain distribuida ni sustituye el almacenamiento transaccional de SARC.</div>
+    </section>
+
+    <section class="metrics" aria-label="Resumen de la cadena">
+      <article class="metric panel"><span>Bloques</span><strong id="metric-blocks">1</strong><small>Incluye el bloque inicial</small></article>
+      <article class="metric panel"><span>Eventos</span><strong id="metric-events">0</strong><small>Registros de prueba</small></article>
+      <article class="metric panel"><span>Integridad</span><strong id="metric-integrity" class="status-good">Válida</strong><small id="metric-integrity-detail">Cadena verificada</small></article>
+    </section>
+
+    <section class="workspace">
+      <section class="panel form-panel">
+        <div class="panel-heading">
+          <div><p class="section-kicker">REGISTRO</p><h2>Agregar evento de cita</h2></div>
+          <span class="step">01</span>
+        </div>
+        <form id="event-form">
+          <label for="event-type">Tipo de evento</label>
+          <select id="event-type" required>
+            <option value="CITA_CREADA">Cita creada</option>
+            <option value="CITA_CANCELADA">Cita cancelada</option>
+            <option value="ESTADO_ACTUALIZADO">Estado actualizado</option>
+          </select>
+
+          <label for="appointment-id">Identificador de cita (dato ficticio)</label>
+          <input id="appointment-id" type="text" maxlength="30" placeholder="Ej. CITA-1001" required />
+
+          <div class="form-row">
+            <div>
+              <label for="actor">Actor de la operación</label>
+              <input id="actor" type="text" maxlength="60" placeholder="Ej. Usuario de prueba" required />
+            </div>
+            <div>
+              <label for="role">Rol</label>
+              <select id="role" required>
+                <option value="PACIENTE">Paciente</option>
+                <option value="RECEPCIONISTA">Recepcionista</option>
+                <option value="MEDICO">Médico</option>
+                <option value="SISTEMA">Sistema</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="details">Descripción del evento</label>
+          <textarea id="details" rows="3" maxlength="180" placeholder="Ej. Cita de prueba registrada para consulta general." required></textarea>
+          <button class="button button-primary full" type="submit">Calcular hash y agregar bloque</button>
+          <p class="form-hint">Se utilizan datos sintéticos. No escriba nombres, documentos ni información clínica real.</p>
+        </form>
+      </section>
+
+      <section class="panel chain-panel">
+        <div class="panel-heading">
+          <div><p class="section-kicker">TRAZABILIDAD</p><h2>Cadena de bloques</h2></div>
+          <span class="step">02</span>
+        </div>
+        <div class="toolbar">
+          <button id="verify-button" class="button button-secondary" type="button">Verificar integridad</button>
+          <button id="sample-button" class="button button-quiet" type="button">Cargar ejemplo</button>
+          <button id="reset-button" class="button button-quiet" type="button">Restablecer</button>
+        </div>
+        <div id="chain-list" class="chain-list" aria-live="polite"></div>
+      </section>
+    </section>
+
+    <section class="panel result-panel" aria-live="polite">
+      <div class="panel-heading">
+        <div><p class="section-kicker">VALIDACIÓN</p><h2>Resultado de integridad</h2></div>
+        <span class="step">03</span>
+      </div>
+      <div id="verification-result" class="verification good">
+        <span class="verification-icon" aria-hidden="true">✓</span>
+        <div><strong>Cadena íntegra</strong><p>Agregue eventos y ejecute la verificación para comprobar los enlaces criptográficos.</p></div>
+      </div>
+      <div class="tamper-box">
+        <div><strong>Demostración de alteración</strong><p>Use el botón “Alterar dato” de un bloque de evento y vuelva a verificar la cadena. El hash almacenado ya no corresponderá con su contenido.</p></div>
+        <span class="tamper-tag">PRUEBA CONTROLADA</span>
+      </div>
+    </section>
+
+    <section class="explanation">
+      <article><span>01</span><div><strong>Registro</strong><p>Se prepara la información del evento y se calcula su resumen SHA-256.</p></div></article>
+      <article><span>02</span><div><strong>Enlace</strong><p>El bloque incorpora el hash del bloque anterior para formar una secuencia vinculada.</p></div></article>
+      <article><span>03</span><div><strong>Verificación</strong><p>Se recalculan los hashes y se comprueba que los datos y enlaces no hayan cambiado.</p></div></article>
+    </section>
+
+    <footer>GA8 · 220501096 · AA2 · EV04 <span>Prueba de concepto independiente relacionada con SARC</span></footer>
+  </main>
+</body>
+</html>
